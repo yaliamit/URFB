@@ -11,12 +11,4 @@
     <ConfirmationsSetting value="0" id="Remove" />
   </component>
   <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.6.5 (/anaconda2/envs/myenv/bin/python3.6)" project-jdk-type="Python SDK" />
-  <component name="PyConsoleOptionsProvider">
-    <option name="myPythonConsoleState">
-      <console-settings is-module-sdk="true">
-        <option name="myUseModuleSdk" value="true" />
-        <option name="myAddSourceRoots" value="true" />
-      </console-settings>
-    </option>
-  </component>
 </project>
