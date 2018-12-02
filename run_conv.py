@@ -57,10 +57,12 @@ with tf.device(gpu_device):
                 run_epoch(val,i,OPS,PARS,sess,type='Val')
                 sys.stdout.flush()
 
-        # For those layers that are converted to sparse, either use current values or if they
-        # are in rerandomize - reinitialize them.
+
         if ('sparse' in PARS):
+            # For those layers that are converted to sparse, either use current values or if they
+            # are in rerandomize - reinitialize them. WRS then gets used to convert to sparse later on.
             WRS, sparse_shape=Conv_net_gpu.get_parameters_s(OPS['VS'],PARS['sparse'],OPS['TS'],re_randomize=re_randomize)
+            # Same for the other layers.
             WR=Conv_net_gpu.get_parameters(OPS['VS'],PARS, re_randomize=re_randomize)
 
         # Final test accuracy
@@ -79,12 +81,14 @@ with tf.device(gpu_device):
 
       with tf.Session(config=config) as sess:
 
+        # Create sparse tensors with initial valus from WRS.
         SP=Conv_sparse_aux.convert_conv_layers_to_sparse(sparse_shape,WRS,sess,PARS)
         OPS={}
         OPS['x'] = tf.placeholder(tf.float32, shape=[PARS['batch_size'], dim, dim, PARS['nchannels']], name="x")
         OPS['y_'] = tf.placeholder(tf.float32, shape=[PARS['batch_size'], PARS['n_classes']], name="y")
         OPS['Train'] = tf.placeholder(tf.bool, name="Train")
 
+        # Create network graph. Sparse layers are defined explicitly by the inds, vals, dims variables of a sparse tensor.
         Conv_net_aux.setup_net(PARS, OPS,WR=WR,SP=SP,non_trainable=non_trainable)
 
         SS=Conv_sparse_aux.get_sparse_parameters(OPS['VS'])

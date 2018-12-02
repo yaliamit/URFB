@@ -2,7 +2,7 @@ Code for running URFB, FRFB and regular SGD.
 
 The code is run on the current machine as follows:
 
-python run_conv.py _pars/fncrc OUT
+python run_conv.py _pars/simpnet OUT
 
 The last argument is an output file, the second to last is a parameter file (it expects a .txt extension)
 but don't add it in the command line.
