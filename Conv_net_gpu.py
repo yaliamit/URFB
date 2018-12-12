@@ -217,6 +217,10 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                             if (j_parent is not None):
                                 name,T=get_name(TS[-1])
                                 joint_parent[name]=j_parent
+                    elif ('reshape' in l['name']):
+                        with tf.variable_scope(l['name']):
+                            reshaped=tf.reshape(parent,l['new_shape'])
+                            TS.append(reshaped)
 
             with tf.variable_scope('loss'):
                # Hinge loss
@@ -230,15 +234,33 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                  res=tf.reshape(res,shape=shp)
                  res=tf.reduce_sum(tf.nn.relu(1.+res),axis=1)
                  loss=tf.reduce_mean(cor+PARS['off_class_fac']*res/(PARS['n_classes']-1),name="hinge")
+               elif('blob' in PARS):
+                   fc2=TS[-1]
+                   loss = tf.reduce_mean(tf.reduce_sum(-y_[:,:,:,2] * fc2[:,:,:,2] + tf.math.softplus(fc2[:,:,:,2]), axis=[1, 2]))
+                   loss = loss + tf.reduce_mean(
+                       tf.reduce_sum((y_[:, :, :, 0] - fc2[:, :, :, 0]) * (y_[:, :, :, 0] - fc2[:, :, :, 0]) * ya
+                                     + (y_[:, :, :, 1] - fc2[:, :, :, 1]) * (y_[:, :, :, 1] - fc2[:, :, :, 1]) * ya,
+                                     axis=[1, 2]))
                else:
                  # Softmax-logistic loss
                  loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=TS[-1]),name="sm")
 
 
             # Accuracy computation
-            with tf.variable_scope('helpers'):
-                correct_prediction = tf.equal(tf.argmax(TS[-1], 1), tf.argmax(y_, 1))
-                accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32),name="ACC")
+            if ('hinge' in PARS):
+                with tf.variable_scope('helpers'):
+                    correct_prediction = tf.equal(tf.argmax(TS[-1], 1), tf.argmax(y_, 1))
+                    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32),name="ACC")
+            else:
+                with tf.variable_scope('helpers'):
+                    accuracy=[]
+                    hy=tf.greater(TS[-1][:,:,:,2],0)
+                    accuracy.append(tf.reduce_sum(tf.abs(hy - y_[:, :, :, 2]) *
+                                                  y_[:,:,:2][:, :, :, 2]) / tf.reduce_sum(y_[:, :, :, 2]))
+                    accuracy.append(tf.reduce_sum((tf.abs(TS[-1][:, :, :, 0] - y_[:, :, :, 0]) +
+                                 np.abs(TS[-1][:, :, :, 1] - y_[:, :, :, 1])) * y_[:, :, :, 2]) /
+                                    tf.reduce_sum(train[1][:, :, :, 2]))
+                    # inds=[10,20,30,40,50,60,70,80]
             print('joint_parent',joint_parent)
             # joint_parent contains information on layers that are parents to two other layers which affects the gradient propagation.
             PARS['joint_parent'] = joint_parent

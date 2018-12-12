@@ -173,8 +173,9 @@ def process_parameters(net):
     PARS = {}
     parse_text_file(net, PARS, lname='layers', dump=True)
     #PARS['step_size'] = PARS['eta_init']
-    PARS['Rstep_size'] = list(PARS['force_global_prob'])[1] * PARS['step_size']
-    print('Rstep_size', PARS['Rstep_size'])
+    if 'force_global_prob' in PARS:
+        PARS['Rstep_size'] = list(PARS['force_global_prob'])[1] * PARS['step_size']
+        print('Rstep_size', PARS['Rstep_size'])
     PARS['nonlin_scale'] = .5
 
     return PARS
