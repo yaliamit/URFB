@@ -128,6 +128,7 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                                 name, T = get_name(ts)
                                 if l['parent'] in name and not 'Equal' in name:
                                     parent=T
+
                 # First check if this is one of the new sparse layers - create it with existing parameter values.
                 if (SP is not None and l['name'] in PARS['sparse']):
                     Win=SP[l['name']][0]
@@ -148,10 +149,10 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                     # with non-linearity - always clipped linearity
                     if('non_linearity' in l and l['non_linearity'] == 'tanh'):
                         scale = PARS['nonlin_scale']
-                        scope_name = 'sparse'+l['name']+ 'nonlin'
+                        scope_name = scope_name+ 'nonlin'
                     with tf.variable_scope(scope_name):
                         num_units=(Win.dense_shape[0]).eval()
-                        TS.append(sparse_fully_connected_layer(parent,PARS['batch_size'],PARS['nonlin_scale'], num_units=num_units, num_features=l['num_filters'], prob=prob,scale=scale, Win=Win,Rin=Rin, Fin=Fin))
+                        TS.append(sparse_fully_connected_layer(parent,PARS['batch_size'], num_units=num_units, num_features=l['num_filters'], prob=prob,scale=scale, Win=Win,Rin=Rin, Fin=Fin))
                 # Otherwise create regular layer either from scratch or with existing parameters.
                 else:
                     if ('conv' in l['name']):
@@ -167,7 +168,7 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                             scale=PARS['nonlin_scale']
                             scope_name=l['name']+'nonlin'
                         with tf.variable_scope(scope_name):
-                            TS.append(conv_layer(parent,PARS['batch_size'],PARS['nonlin_scale'], filter_size=list(l['filter_size']),num_features=l['num_filters'], prob=prob, scale=scale,Win=Win,Rin=Rin))
+                            TS.append(conv_layer(parent,PARS['batch_size'],filter_size=list(l['filter_size']),num_features=l['num_filters'], prob=prob, scale=scale,Win=Win,Rin=Rin))
                     # Dense layer
                     elif ('dens' in l['name']):
                         Win = None
@@ -186,7 +187,7 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                             # Make sure final layer has num_units=num_classes
                             if ('final' in l):
                                 num_units=PARS['n_classes']
-                            TS.append(fully_connected_layer(parent,PARS['batch_size'],PARS['nonlin_scale'], num_features=num_units,prob=prob,scale=scale, Win=Win,Rin=Rin))
+                            TS.append(fully_connected_layer(parent,PARS['batch_size'], num_features=num_units,prob=prob,scale=scale, Win=Win,Rin=Rin))
                     # Pooling layer
                     elif ('pool' in l['name']):
                         with tf.variable_scope(l['name']):
@@ -316,7 +317,8 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             if ('nonlin' in name):
                 shortname=name[0:name.find('nonlin')]
                 scale=PARS['nonlin_scale']
-            gradconvW, gradx = grad_conv_layer(PARS['batch_size'],below=pre,back_propped=gradx,current=T,W=VS[vs], R=VS[vs+1],scale=scale)
+                bscale=PARS['b_nonlin_scale']
+            gradconvW, gradx = grad_conv_layer(PARS['batch_size'],below=pre,back_propped=gradx,current=T,W=VS[vs], R=VS[vs+1],scale=scale, bscale=bscale)
             if (non_trainable is None or (non_trainable is not None and shortname not in non_trainable)):
                 assign_op_convW = update_only_non_zero(VS[vs],gradconvW,PARS['step_size'])
                 OPLIST.append(assign_op_convW)
@@ -349,7 +351,8 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             scale = 0
             if ('nonlin' in name):
                 scale = PARS['nonlin_scale']
-            gradfcW, gradx = grad_fully_connected(below=pre,back_propped=gradx,current=T, W=VS[vs],R=VS[vs+1], scale=scale)
+                bscale = PARS['b_nonlin_scale']
+            gradfcW, gradx = grad_fully_connected(below=pre,back_propped=gradx,current=T, W=VS[vs],R=VS[vs+1], scale=scale, bscale=bscale)
             assign_op_fcW = update_only_non_zero(VS[vs],gradfcW,PARS['step_size'])
             OPLIST.append(assign_op_fcW)
             # If an R variable exists and is a 2-dim matrix i.e. is active
@@ -365,10 +368,11 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             doR=(VS[vs+ 8].get_shape().as_list()[0] == 2)
             if ('nonlin' in name):
                 scale = PARS['nonlin_scale']
+                bscale = PARS['b_nonlin_scale']
             if (PARS['force_global_prob'][0]==1. or not doR):
-                gradfcW, gradx, gradfcR = grad_sparse_fully_connected(below=pre,back_propped=gradx,current=T, F_inds=VS[vs], F_vals=VS[vs+1], F_dims=VS[vs+2], W_inds=VS[vs+3], R_inds=None,scale=scale)
+                gradfcW, gradx, gradfcR = grad_sparse_fully_connected(below=pre,back_propped=gradx,current=T, F_inds=VS[vs], F_vals=VS[vs+1], F_dims=VS[vs+2], W_inds=VS[vs+3], R_inds=None,scale=scale, bscale=bscale)
             else:
-                gradfcW, gradx, gradfcR = grad_sparse_fully_connected(below=pre,back_propped=gradx,current=T, F_inds=VS[vs], F_vals=VS[vs+1], F_dims=VS[vs+2], W_inds=VS[vs+3], R_inds=VS[vs+6],scale=scale)
+                gradfcW, gradx, gradfcR = grad_sparse_fully_connected(below=pre,back_propped=gradx,current=T, F_inds=VS[vs], F_vals=VS[vs+1], F_dims=VS[vs+2], W_inds=VS[vs+3], R_inds=VS[vs+6],scale=scale, bscale=bscale)
 
             assign_op_fcW = update_only_non_zero(VS[vs+4],gradfcW,PARS['step_size'])
             OPLIST.append(assign_op_fcW)

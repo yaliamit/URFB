@@ -4,7 +4,7 @@ from keras import backend as K
 from keras.layers.convolutional import UpSampling2D
 import sys
 
-def conv_layer(input,batch_size,nonlin_scale,filter_size=[3,3],num_features=[1],prob=[1.,-1.],scale=0, Win=None, Rin=None):
+def conv_layer(input,batch_size,filter_size=[3,3],num_features=[1],prob=[1.,-1.],scale=0, Win=None, Rin=None):
 
     # Get number of input features from input and add to shape of new layer
     shape=filter_size+[input.get_shape().as_list()[-1],num_features]
@@ -24,20 +24,18 @@ def conv_layer(input,batch_size,nonlin_scale,filter_size=[3,3],num_features=[1],
     #b = tf.get_variable('b',shape=[num_features],initializer=tf.zeros_initializer)
     conv = tf.nn.conv2d(input, W, strides=[1, 1, 1, 1], padding='SAME')
     if (scale>0):
-        conv = tf.clip_by_value(nonlin_scale * conv, -1., 1.)
+        conv = tf.clip_by_value(scale * conv, -1., 1.)
     return(conv)
 
-def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale):
+def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale=0):
     w_shape=W.shape
     strides=[1,1,1,1]
     back_prop_shape=[-1]+(current.shape.as_list())[1:]
     out_backprop=tf.reshape(back_propped,back_prop_shape)
     # If abs of feedforward input is larger than 1 the derivative of the transfer function is 0.
     if (scale>0):
-        out_backprop=scale*out_backprop
-        #on_zero = K.zeros_like(out_backprop)
-        #out_backprop = scale * K.tf.where(tf.greater_equal(tf.abs(current), 1./scale), on_zero, out_backprop)
-        #out_backprop = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, out_backprop)
+        on_zero = K.zeros_like(out_backprop)
+        out_backprop = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, out_backprop)
 
     gradconvW=tf.nn.conv2d_backprop_filter(input=below,filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
     input_shape=[batch_size]+(below.shape.as_list())[1:]
@@ -47,10 +45,11 @@ def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale):
         filter=R
     print('input_sizes',input_shape,'filter',filter.shape.as_list(),'out_backprop',out_backprop.shape.as_list())
     gradconvx=tf.nn.conv2d_backprop_input(input_sizes=input_shape,filter=filter,out_backprop=out_backprop,strides=strides,padding='SAME')
-
+    if (bscale>0):
+        gradconvx = tf.clip_by_value(bscale * gradconvx, -1., 1.)
     return gradconvW, gradconvx
 
-def fully_connected_layer(input,batch_size,nonlin_scale, num_features,prob=[1.,-1.], scale=0,Win=None,Rin=None):
+def fully_connected_layer(input,batch_size, num_features,prob=[1.,-1.], scale=0,Win=None,Rin=None):
     # Make sure input is flattened.
     flat_dim=np.int32(np.array(input.get_shape().as_list())[1:].prod())
     input_flattened = tf.reshape(input, shape=[batch_size,flat_dim])
@@ -68,21 +67,20 @@ def fully_connected_layer(input,batch_size,nonlin_scale, num_features,prob=[1.,-
         W_fc = tf.get_variable('W',initializer=Win)
     fc = tf.matmul(input_flattened, W_fc)
     if (scale>0):
-        fc = tf.clip_by_value(nonlin_scale * fc, -1., 1.)
+        fc = tf.clip_by_value(scale * fc, -1., 1.)
     return(fc)
 
 
 
 
-def grad_fully_connected(below, back_propped, current, W, R, scale=0):
+def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0):
 
     belowf=tf.contrib.layers.flatten(below)
     # Gradient of weights of dense layer
     if (scale>0):
         back_propped=scale*back_propped
-        #on_zero = K.zeros_like(back_propped)
-        #back_propped = scale * K.tf.where(tf.greater_equal(tf.abs(current), 1./scale), on_zero, back_propped)
-        #back_propped = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, back_propped)
+        on_zero = K.zeros_like(back_propped)
+        back_propped = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, back_propped)
 
     gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
     # Propagated error to conv layer.
@@ -90,10 +88,11 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0):
     if (len(R.shape.as_list())==2):
         filter=R
     gradfcx=tf.matmul(back_propped,tf.transpose(filter))
-
+    if (bscale>0):
+        gradfcx = tf.clip_by_value(bscale * gradfcx, -1., 1.)
     return gradfcW, gradfcx
 
-def sparse_fully_connected_layer(input,batch_size,nonlin_scale, num_units, num_features,prob=[1.,-1.], scale=0,Win=None,Rin=None, Fin=None):
+def sparse_fully_connected_layer(input,batch_size, num_units, num_features,prob=[1.,-1.], scale=0,Win=None,Rin=None, Fin=None):
     # Make sure input is flattened.
     input_shape=input.get_shape().as_list()
     flat_dim=np.int32(np.prod(input_shape[1:]))
@@ -125,20 +124,18 @@ def sparse_fully_connected_layer(input,batch_size,nonlin_scale, num_units, num_f
     fc = tf.reshape(fc,input_shape[0:3]+[num_features,])
     # If non-linearity
     if (scale>0):
-        fc = tf.clip_by_value(nonlin_scale * fc, -1., 1.)
+        fc = tf.clip_by_value(scale * fc, -1., 1.)
     return(fc)
 
 # Gradient for sparse fully connected.
-def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_dims, W_inds, R_inds, scale=0):
+def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_dims, W_inds, R_inds, scale=0, bscale=0):
 
     # Flatten whatever is coming from below
     belowf=tf.contrib.layers.flatten(below)
     # If non-linearity
     if (scale>0):
-        back_propped=scale*back_propped
-        #on_zero = K.zeros_like(back_propped)
-        #back_propped = scale * K.tf.where(tf.greater_equal(tf.abs(current), 1./scale), on_zero, back_propped)
-        #back_propped = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, back_propped)
+        on_zero = K.zeros_like(back_propped)
+        back_propped = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, back_propped)
 
     # Flatten whatever is coming from abbove
     back_proppedf=tf.contrib.layers.flatten(back_propped)
@@ -157,6 +154,8 @@ def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_
     filter=tf.SparseTensor(indices=F_inds,values=F_vals,dense_shape=F_dims)
     gradfcx=tf.transpose(tf.sparse_tensor_dense_matmul(filter,tf.transpose(back_proppedf)))
     gradfcx=tf.reshape(gradfcx,below.shape)
+    if (bscale>0):
+        gradfcx = tf.clip_by_value(bscale * gradfcx, -1., 1.)
     return gradfcW, gradfcx, gradfcR
 
 def MaxPoolingandMask(input,pool_size, stride):
