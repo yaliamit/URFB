@@ -176,7 +176,7 @@ def process_parameters(net):
     if 'force_global_prob' in PARS:
         PARS['Rstep_size'] = list(PARS['force_global_prob'])[1] * PARS['step_size']
         print('Rstep_size', PARS['Rstep_size'])
-    
+
 
     return PARS
 def sparse_process_parameters(PARS):

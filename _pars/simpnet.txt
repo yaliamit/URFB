@@ -9,10 +9,10 @@ off_class_fac:1.
 hinge:1.
 force_global_prob:(1.,1.)
 nonlin_scale:.5
-b_nonlin_scale:0
+b_nonlin_scale:0.
 name:input1
 name:conv1R;num_filters:32;filter_size:(5,5);non_linearity:tanh;parent:input1
-name:pool1;pool_size:(3, 3);stride:(2, 2);parent:conv1R
+name:pool1;pool_size:(2, 2);stride:(2, 2);parent:conv1R
 name:drop1;drop:0.8;parent:pool1
 name:newdensp;num_units:500;non_linearity:tanh;parent:drop1
 name:drop2;drop:0.3;parent:newdensp

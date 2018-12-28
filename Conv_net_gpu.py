@@ -313,6 +313,7 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
                 joint_parent=None
         if ('conv' in name and not 'sparse' in name):
             scale=0
+            bscale = 0
             shortname=name
             if ('nonlin' in name):
                 shortname=name[0:name.find('nonlin')]
@@ -349,6 +350,7 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             ts+=1
         elif ('dens' in name):
             scale = 0
+            bscale = 0
             if ('nonlin' in name):
                 scale = PARS['nonlin_scale']
                 bscale = PARS['b_nonlin_scale']
@@ -365,6 +367,7 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             vs+=2
         elif ('sparse' in name):
             scale = 0
+            bscale = 0
             doR=(VS[vs+ 8].get_shape().as_list()[0] == 2)
             if ('nonlin' in name):
                 scale = PARS['nonlin_scale']
