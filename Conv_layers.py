@@ -35,7 +35,9 @@ def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale):
     # If abs of feedforward input is larger than 1 the derivative of the transfer function is 0.
     if (scale>0):
         on_zero = K.zeros_like(out_backprop)
-        out_backprop = scale * K.tf.where(tf.greater_equal(tf.abs(current), 1./scale), on_zero, out_backprop)
+        #out_backprop = scale * K.tf.where(tf.greater_equal(tf.abs(current), 1./scale), on_zero, out_backprop)
+        out_backprop = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, out_backprop)
+
     gradconvW=tf.nn.conv2d_backprop_filter(input=below,filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
     input_shape=[batch_size]+(below.shape.as_list())[1:]
 
@@ -77,7 +79,9 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0):
     # Gradient of weights of dense layer
     if (scale>0):
         on_zero = K.zeros_like(back_propped)
-        back_propped = scale * K.tf.where(tf.greater_equal(tf.abs(current), 1./scale), on_zero, back_propped)
+        #back_propped = scale * K.tf.where(tf.greater_equal(tf.abs(current), 1./scale), on_zero, back_propped)
+        back_propped = scale * K.tf.where(tf.greater_equal(tf.abs(current), 1.), on_zero, back_propped)
+
     gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
     # Propagated error to conv layer.
     filter=W
@@ -130,7 +134,9 @@ def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_
     # If non-linearity
     if (scale>0):
         on_zero = K.zeros_like(back_propped)
-        back_propped = scale * K.tf.where(tf.greater_equal(tf.abs(current), 1./scale), on_zero, back_propped)
+        #back_propped = scale * K.tf.where(tf.greater_equal(tf.abs(current), 1./scale), on_zero, back_propped)
+        back_propped = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, back_propped)
+
     # Flatten whatever is coming from abbove
     back_proppedf=tf.contrib.layers.flatten(back_propped)
     # Get the active indices from below and above for the out-product gradient.
