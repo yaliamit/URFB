@@ -169,7 +169,7 @@ def get_mnist():
 
 def get_cifar(data_set='cifar10'):
 
-    filename = '../_CIFAR100/'+data_set+'_train.hdf5'
+    filename = '_CIFAR/'+data_set+'_train.hdf5'
     print(filename)
     f = h5py.File(filename, 'r')
     key = list(f.keys())[0]
@@ -182,7 +182,7 @@ def get_cifar(data_set='cifar10'):
     train_labels=one_hot(np.int32(tr_lb[0:45000]))
     val_data=np.float32(tr[45000:])/255.
     val_labels=one_hot(np.int32(tr_lb[45000:]))
-    filename = '../_CIFAR100/'+data_set+'_test.hdf5'
+    filename = '_CIFAR/'+data_set+'_test.hdf5'
     f = h5py.File(filename, 'r')
     key = list(f.keys())[0]
     # Get the data

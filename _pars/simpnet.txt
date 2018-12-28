@@ -7,7 +7,7 @@ sparse_batch_size:50
 step_size:.01
 sparse_step_size:.1
 debug:False
-num_train:50000
+num_train:5000
 off_class_fac:1.
 hinge:1.
 force_global_prob:(1.,0.)
