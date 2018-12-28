@@ -271,7 +271,8 @@ def run_epoch(train,i,OPS,PARS,sess,type='Train'):
     if ('Train' in type):
         np.random.shuffle(ii)
     tr = train[0][ii]
-    if ('shift' in PARS or 'saturation' in PARS and type=='Train_sparse'):
+    if (type=='Train_sparse'):
+      if ('shift' in PARS or 'saturation' in PARS):
         shift=0
         saturation=False
         if ('shift' in PARS):
