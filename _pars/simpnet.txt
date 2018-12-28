@@ -9,7 +9,7 @@ off_class_fac:1.
 hinge:1.
 force_global_prob:(1.,1.)
 nonlin_scale:.5
-b_nonlin_scale:0.
+b_nonlin_scale:.5
 name:input1
 name:conv1R;num_filters:32;filter_size:(5,5);non_linearity:tanh;parent:input1
 name:pool1;pool_size:(3, 3);stride:(3, 3);parent:conv1R
