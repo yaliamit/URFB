@@ -26,6 +26,7 @@ print('net', net)
 # Process parameters from a text file ( as in _pars )
 PARS=Conv_net_aux.process_parameters(net)
 train, val, test, dim = get_data(PARS)
+
 if ('re_randomize' in PARS): re_randomize=PARS['re_randomize']
 else: re_randomize=None
 if ('non_trainable' in PARS): non_trainable=PARS['non_trainable']

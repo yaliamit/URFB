@@ -87,9 +87,13 @@ def rotate_dataset_rand(X,angle=0,scale=0,shift=0,gr=0,flip=False,blur=False,sat
     return(np.float32(Xr))
 
 
-def one_hot(values,n_values=10):
+def one_hot(values,PARS=None,n_values=10):
+
     n_v = np.maximum(n_values,np.max(values) + 1)
     oh=np.float32(np.eye(n_v)[values])
+    if (PARS is not None):
+        if ("L2" in PARS):
+            oh=2.*oh-1.
     return oh
 
 
@@ -167,8 +171,9 @@ def get_mnist():
     testl=one_hot(testl)
     return (tr,trl), (val,vall), (test,testl)
 
-def get_cifar(data_set='cifar10'):
+def get_cifar(PARS):
 
+    data_set=PARS['data_set']
     filename = '_CIFAR/'+data_set+'_train.hdf5'
     print(filename)
     f = h5py.File(filename, 'r')
@@ -179,23 +184,23 @@ def get_cifar(data_set='cifar10'):
     key = list(f.keys())[1]
     tr_lb=f[key]
     train_data=np.float32(tr[0:45000])/255.
-    train_labels=one_hot(np.int32(tr_lb[0:45000]))
+    train_labels=one_hot(np.int32(tr_lb[0:45000]),PARS)
     val_data=np.float32(tr[45000:])/255.
-    val_labels=one_hot(np.int32(tr_lb[45000:]))
+    val_labels=one_hot(np.int32(tr_lb[45000:]),PARS)
     filename = '_CIFAR/'+data_set+'_test.hdf5'
     f = h5py.File(filename, 'r')
     key = list(f.keys())[0]
     # Get the data
     test_data = np.float32(f[key])/255.
     key = list(f.keys())[1]
-    test_labels=one_hot(np.int32(f[key]))
+    test_labels=one_hot(np.int32(f[key]),PARS)
     return (train_data, train_labels), (val_data, val_labels), (test_data, test_labels)
 
 
 
 def get_data(PARS):
     if ('cifar' in PARS['data_set']):
-        train, val, test=get_cifar(data_set=PARS['data_set'])
+        train, val, test=get_cifar(PARS)
     elif (PARS['data_set']=="mnist"):
         train, val, test= get_mnist()
     num_train = np.minimum(PARS['num_train'], train[0].shape[0])

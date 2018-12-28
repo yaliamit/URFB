@@ -225,33 +225,47 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
 
             with tf.variable_scope('loss'):
                # Hinge loss
-               if (PARS['hinge']):
+               if ('hinge' in PARS and PARS['hinge']):
+                 # Make y_ boollean
                  yb=tf.cast(y_,dtype=tf.bool)
+                 # Get weight on correct class
                  cor=tf.boolean_mask(TS[-1],yb)
+                 # Hinge the weight on correct mask
                  cor = tf.nn.relu(1.-cor)
+                 # Get weights on incorrect classes
                  res=tf.boolean_mask(TS[-1],tf.logical_not(yb))
                  shp=TS[-1].shape.as_list()
                  shp[1]=shp[1]-1
+                 # Reshape as B x (C-1)
                  res=tf.reshape(res,shape=shp)
+                 # Hinge these weights the other way.
                  res=tf.reduce_sum(tf.nn.relu(1.+res),axis=1)
+                 # Add the two with factor.
                  loss=tf.reduce_mean(cor+PARS['off_class_fac']*res/(PARS['n_classes']-1),name="hinge")
                elif('blob' in PARS):
                    fc2=TS[-1]
+                   ya=y_[:,:,:,2]
                    loss = tf.reduce_mean(tf.reduce_sum(-y_[:,:,:,2] * fc2[:,:,:,2] + tf.math.softplus(fc2[:,:,:,2]), axis=[1, 2]))
                    loss = loss + tf.reduce_mean(
                        tf.reduce_sum((y_[:, :, :, 0] - fc2[:, :, :, 0]) * (y_[:, :, :, 0] - fc2[:, :, :, 0]) * ya
                                      + (y_[:, :, :, 1] - fc2[:, :, :, 1]) * (y_[:, :, :, 1] - fc2[:, :, :, 1]) * ya,
                                      axis=[1, 2]))
+               elif('L2' in PARS):
+                   # L2 loss.
+                   diff=y_-TS[-1]
+                   l2_norm=tf.reduce_sum(diff * diff, axis=1)
+                   loss=tf.reduce_mean(l2_norm)
                else:
                  # Softmax-logistic loss
                  loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=TS[-1]),name="sm")
 
 
-            # Accuracy computation
+            # Accuracy computation for classification
             if ('hinge' in PARS):
                 with tf.variable_scope('helpers'):
                     correct_prediction = tf.equal(tf.argmax(TS[-1], 1), tf.argmax(y_, 1))
                     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32),name="ACC")
+            # Accuracy computation for parametric object detection
             else:
                 with tf.variable_scope('helpers'):
                     accuracy=[]
@@ -260,8 +274,7 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                                                   y_[:,:,:2][:, :, :, 2]) / tf.reduce_sum(y_[:, :, :, 2]))
                     accuracy.append(tf.reduce_sum((tf.abs(TS[-1][:, :, :, 0] - y_[:, :, :, 0]) +
                                  np.abs(TS[-1][:, :, :, 1] - y_[:, :, :, 1])) * y_[:, :, :, 2]) /
-                                    tf.reduce_sum(train[1][:, :, :, 2]))
-                    # inds=[10,20,30,40,50,60,70,80]
+                                    tf.reduce_sum(y_[:, :, :, 2]))
             print('joint_parent',joint_parent)
             # joint_parent contains information on layers that are parents to two other layers which affects the gradient propagation.
             PARS['joint_parent'] = joint_parent
