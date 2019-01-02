@@ -100,6 +100,7 @@ with tf.device(gpu_device):
         Conv_net_gpu.zero_out_weights(PARS,VS,sess)
 
         # Run on test set before starting to train
+        test_correlations(OPS)
         run_epoch(test,-1,OPS,PARS,sess,type='Test')
 
         # Get some stats on weights.
@@ -115,8 +116,8 @@ with tf.device(gpu_device):
                 run_epoch(val,i,OPS,PARS,sess,type='Val')
                 sys.stdout.flush()
         Conv_sparse_aux.get_weight_stats(SS)
-        for sp in PARS['sparse']:
-            Conv_sparse_aux.compare_params_sparse(sp, sparse_shape, OPS['VS'], WR)
+        #for sp in PARS['sparse']:
+        #    Conv_sparse_aux.compare_params_sparse(sp, sparse_shape, OPS['VS'], WR)
         Conv_net_aux.finalize(test,OPS,PARS,net,sess)
 
 print("DONE")
