@@ -54,9 +54,9 @@ with tf.device(gpu_device):
         # Run training epochs
         for i in range(PARS['num_epochs']):  # number of epochs
             run_epoch(train,i,OPS,PARS,sess)
-            if (np.mod(i, 1) == 0):
-                run_epoch(val,i,OPS,PARS,sess,type='Val')
-                sys.stdout.flush()
+
+            run_epoch(val,i,OPS,PARS,sess,type='Val')
+            sys.stdout.flush()
 
 
         if ('sparse' in PARS):

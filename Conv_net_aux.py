@@ -297,13 +297,25 @@ def run_epoch(train,i,OPS,PARS,sess,type='Train'):
             act, lot = sess.run([OPS['accuracy'], OPS['loss']], feed_dict={OPS['x']: batch[0], OPS['y_']: batch[1], OPS['Train']: False})
             acc += act
             lo += lot
+
         ca += 1
 
     print('Epoch time', time.time() - t1)
     Conv_net_aux.print_results(type, i, lo/ca, acc/ca)
     return acc / ca, lo / ca
 
+
+def test_correlations(OPS,sess):
+
+    VS=OPS['VS']
+    for i in np.arange(0,len(VS),2):
+        W=VS[i].eval()
+        R=np.transpose(VS[i+1].eval())
+        print("Layer",(len(VS)-i)/2)
+        print(np.corrcoef(W.ravel(),R.ravel()))
+
 def finalize(test,OPS,PARS,net,sess):
+            test_correlations(OPS, sess)
             ac, lo= run_epoch(test,0,OPS,PARS,sess,type='Test')
             print('step,','0,', 'aggegate accuracy,', ac)
             saver = tf.train.Saver()
