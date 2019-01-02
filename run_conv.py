@@ -5,7 +5,7 @@ import tensorflow as tf
 import Conv_net_gpu
 import Conv_sparse_aux
 import  Conv_net_aux
-from Conv_net_aux import run_epoch
+from Conv_net_aux import run_epoch, test_correlations
 from Conv_data import get_data
 
 
@@ -50,6 +50,7 @@ with tf.device(gpu_device):
         #zero_out_weights(PARS,VS,sess)
 
         # Initial test accuracy
+        test_correlations(OPS)
         run_epoch(test,-1,OPS,PARS,sess,type='Test')
         # Run training epochs
         for i in range(PARS['num_epochs']):  # number of epochs

@@ -305,18 +305,18 @@ def run_epoch(train,i,OPS,PARS,sess,type='Train'):
     return acc / ca, lo / ca
 
 
-def test_correlations(OPS,sess):
+def test_correlations(OPS):
 
     VS=OPS['VS']
     for i in np.arange(0,len(VS),2):
         W=VS[i].eval()
         R=VS[i+1].eval()
         #if (len(R.shape)==2):
-        print("Layer",(len(VS)-i)/2)
+        print("Layer",(len(VS)-i)/2,VS[i].name)
         print(np.corrcoef(W.ravel(),R.ravel()))
 
 def finalize(test,OPS,PARS,net,sess):
-            test_correlations(OPS, sess)
+            test_correlations(OPS)
             ac, lo= run_epoch(test,0,OPS,PARS,sess,type='Test')
             print('step,','0,', 'aggegate accuracy,', ac)
             saver = tf.train.Saver()
