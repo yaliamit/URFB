@@ -310,7 +310,8 @@ def test_correlations(OPS,sess):
     VS=OPS['VS']
     for i in np.arange(0,len(VS),2):
         W=VS[i].eval()
-        R=np.transpose(VS[i+1].eval())
+        R=VS[i+1].eval()
+        #if (len(R.shape)==2):
         print("Layer",(len(VS)-i)/2)
         print(np.corrcoef(W.ravel(),R.ravel()))
 
