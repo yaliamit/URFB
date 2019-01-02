@@ -308,13 +308,26 @@ def run_epoch(train,i,OPS,PARS,sess,type='Train'):
 def test_correlations(OPS):
 
     VS=OPS['VS']
-    for i in np.arange(0,len(VS),2):
+    i=0
+    while i < len(VS):
+      if ('sparse' not in VS[i].name):
+        print("Layer", (len(VS) - i) / 2, VS[i].name)
         R=VS[i].eval().ravel()
         W=VS[i+1].eval().ravel()
         #if (len(R.shape)==2):
-        print("Layer",(len(VS)-i)/2,VS[i].name)
+        print("Layer",i,VS[i].name)
         print("SD W",np.std(W),"SD R",np.std(R),"MEAN DIFF",np.mean(np.abs(W-R)))
         print(np.corrcoef(W,R))
+        i=i+2
+      else:
+          R = VS[i+4].eval()
+          W = VS[i+7].eval()
+          print("Layer", i, VS[i+3].name)
+          print("SD W", np.std(W), "SD R", np.std(R), "MEAN DIFF", np.mean(np.abs(W - R)))
+          print(np.corrcoef(W, R))
+          i = i + 9
+
+
 
 def finalize(test,OPS,PARS,net,sess):
             test_correlations(OPS)
