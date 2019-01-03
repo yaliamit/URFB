@@ -61,6 +61,7 @@ with tf.device(gpu_device):
 
 
         if ('sparse' in PARS):
+            test_correlations(OPS)
             # For those layers that are converted to sparse, either use current values or if they
             # are in rerandomize - reinitialize them. WRS then gets used to convert to sparse later on.
             WRS, sparse_shape=Conv_net_gpu.get_parameters_s(OPS['VS'],PARS['sparse'],OPS['TS'],re_randomize=re_randomize)
