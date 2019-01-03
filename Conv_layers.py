@@ -78,7 +78,6 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0):
     belowf=tf.contrib.layers.flatten(below)
     # Gradient of weights of dense layer
     if (scale>0):
-        back_propped=scale*back_propped
         on_zero = K.zeros_like(back_propped)
         back_propped = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, back_propped)
 
