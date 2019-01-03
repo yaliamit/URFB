@@ -11,11 +11,11 @@ num_train:50000
 off_class_fac:1.
 hinge:1.
 sparse:conv0aR,conv2R,conv2aR,conv3R,conv3aR,
-non_trainable:conv0R,conv0aR,
+non_trainable:conv0R,
 re_randomize:conv2R,conv2aR,conv3R,conv3aR,newdensp,newdensf
 num_epochs_sparse:100
 #shift:25
-force_global_prob:(1.,1.)
+force_global_prob:(1.,0.)
 nonlin_scale:.5
 b_nonlin_scale:0
 #sparse_global_prob:(1.,0.)
