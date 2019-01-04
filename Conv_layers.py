@@ -9,7 +9,7 @@ def comp_lim(shape):
         lim = np.sqrt(6. / (shape[0] * shape[1] * (shape[2] + shape[3])))
     else:
         lim = np.sqrt(6. / (shape[0] + shape[1]))
-    return 1.5*lim
+    return lim
 def conv_layer(input,batch_size,filter_size=[3,3],num_features=[1],prob=[1.,-1.],scale=0, Win=None, Rin=None):
 
     # Get number of input features from input and add to shape of new layer
