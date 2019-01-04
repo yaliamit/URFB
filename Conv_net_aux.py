@@ -290,7 +290,7 @@ def run_epoch(train,i,OPS,PARS,sess,type='Train'):
     for j in np.arange(0, len(y), batch_size):
         batch = (tr[j:j + batch_size], y[j:j + batch_size])
         if ('Train' in type):
-            grad = sess.run([OPS['TS'][0],]+OPS['dW_OPs'], feed_dict={OPS['x']: batch[0], OPS['y_']: batch[1], OPS['Train']: True})
+            grad = sess.run([OPS['TS'][0][0],]+OPS['dW_OPs'], feed_dict={OPS['x']: batch[0], OPS['y_']: batch[1], OPS['Train']: True})
             acc += grad[-2]
             lo += grad[-1]
         else:
@@ -315,14 +315,14 @@ def test_correlations(OPS):
         R=VS[i].eval().ravel()
         W=VS[i+1].eval().ravel()
         #if (len(R.shape)==2):
-        print("SD W",np.std(W),"SD R",np.std(R),"MEAN DIFF",np.mean(np.abs(W-R)))
+        print("SD W",np.std(W),"SD R",np.std(R),"MAX W",np.max(np.abs(W)),"MEAN DIFF",np.mean(np.abs(W-R)))
         print(np.corrcoef(W,R))
         i=i+2
       else:
           R = VS[i+4].eval()
           W = VS[i+7].eval()
           print("Layer", i, VS[i+3].name)
-          print("SD W", np.std(W), "SD R", np.std(R), "MEAN DIFF", np.mean(np.abs(W - R)))
+          print("SD W", np.std(W), "SD R", np.std(R),"MAX W",np.max(np.abs(W)), "MEAN DIFF", np.mean(np.abs(W - R)))
           print(np.corrcoef(W, R))
           i = i + 9
 

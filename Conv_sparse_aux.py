@@ -119,7 +119,7 @@ def convert_conv_to_sparse(dshape,WR,sess,prob=None):
         SPR=tf.SparseTensor(indices=INDSR,values=VALSR,dense_shape=ndims)
         SPR=tf.sparse_transpose(SPR)
 
-    return(SPW, SPR)
+    return [SPW, SPR]
 
 
 def get_sparse_parameters(VS):
@@ -167,7 +167,8 @@ def get_sparse_parameters_eval(VGS,PARS):
 def convert_conv_layers_to_sparse(sparse_shape, WRS, sess, PARS):
     SP = {}
     for sp in PARS['sparse']:
-        SP[sp] = convert_conv_to_sparse(sparse_shape[sp], WRS[sp], sess, PARS['force_global_prob'][0])
+        ll = convert_conv_to_sparse(sparse_shape[sp], WRS[sp], sess, PARS['force_global_prob'][0])
+        SP[sp]=ll+[WRS[sp][2],]
     return (SP)
 
 # Each layer comes in groups of 9 parameters

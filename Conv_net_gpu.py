@@ -25,18 +25,18 @@ def find_wr(name,VS):
     return W,R
 
 def re_initialize(shape):
-    std=np.sqrt(6./((shape[0]+shape[1])*shape[2]*shape[3]))
+    std=np.sqrt(6./((shape[2]+shape[3])*shape[0]*shape[1]))
     Wout=np.float32(np.random.uniform(-std,std,shape))
     Rout=np.float32(np.random.uniform(-std,std,shape))
 
-    return Wout, Rout
+    return Wout, Rout, std
 
 def re_initialize_dense(shape):
     std=np.sqrt(6./(shape[0]+shape[1]))
     Wout=np.float32(np.random.uniform(-std,std,shape))
     Rout=np.float32(np.random.uniform(-std,std,shape))
 
-    return Wout, Rout
+    return Wout, Rout, std
 
 # Create dictionary of future sparse layer parameters with name given by layer name
 def get_parameters_s(VSIN,SP,TS, re_randomize=None):
@@ -45,13 +45,15 @@ def get_parameters_s(VSIN,SP,TS, re_randomize=None):
     sparse_shape = {}
     for sp in SP:
             Win,Rin=find_wr(sp,VSIN)
-            wrs=[Win.eval(),Rin.eval()]
+            shape=Win.shape.as_list()
+            lim = np.sqrt(6. / ((shape[2] + shape[3]) * shape[0] * shape[1]))
+            wrs=[Win.eval(),Rin.eval(),lim]
             if (re_randomize is not None):
               if sp in re_randomize:
-                 Win, Rin = re_initialize(Win.shape.as_list())
-                 wrs=[Win,Rin]
+                 Win, Rin, lim = re_initialize(Win.shape.as_list())
+                 wrs=[Win,Rin, lim]
             WRS[sp]=wrs
-            sparse_shape[sp] = find_ts(sp, TS).get_shape().as_list()[1:3]
+            sparse_shape[sp] = find_ts(sp, TS)[0].get_shape().as_list()[1:3]
     return(WRS,sparse_shape)
 
 def get_parameters(VSIN,PARS, re_randomize=None):
@@ -62,13 +64,21 @@ def get_parameters(VSIN,PARS, re_randomize=None):
         if ('conv' in l['name'] or 'dens' in l['name']):
             Win,Rin=find_wr(l['name'],VSIN)
             if (Win is not None):
-                wrs = [Win.eval(), Rin.eval()]
+
                 if re_randomize is not None and l['name'] in re_randomize:
                     if ('conv' in l['name']):
-                        Win,Rin = re_initialize(Win.shape.as_list())
+                        Win,Rin, lim = re_initialize(Win.shape.as_list())
                     else:
-                        Win, Rin = re_initialize_dense(Win.shape.as_list())
-                    wrs = [Win, Rin]
+                        Win, Rin, lim = re_initialize_dense(Win.shape.as_list())
+                    wrs = [Win, Rin, lim]
+                else:
+                    shape=Win.shape.as_list()
+                    if ('conv' in l['name']):
+                        lim=np.sqrt(6./((shape[2]+shape[3])*shape[0]*shape[1]))
+                    else:
+                        lim=np.sqrt(6. / (shape[0] + shape[1]))
+                    wrs = [Win, Rin, lim]
+
                 WR[l['name']]=wrs
 
     return(WR)
@@ -133,6 +143,7 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                 if (SP is not None and l['name'] in PARS['sparse']):
                     Win=SP[l['name']][0]
                     Rin=SP[l['name']][1]
+                    lim=SP[l['name']][2]
                     if (Rin is None):
                         F=Win
                     else:
@@ -152,7 +163,7 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                         scope_name = scope_name+ 'nonlin'
                     with tf.variable_scope(scope_name):
                         num_units=(Win.dense_shape[0]).eval()
-                        TS.append(sparse_fully_connected_layer(parent,PARS['batch_size'], num_units=num_units, num_features=l['num_filters'], prob=prob,scale=scale, Win=Win,Rin=Rin, Fin=Fin))
+                        TS.append([sparse_fully_connected_layer(parent,PARS['batch_size'], num_units=num_units, num_features=l['num_filters'], prob=prob,scale=scale, Win=Win,Rin=Rin, Fin=Fin),lim])
                 # Otherwise create regular layer either from scratch or with existing parameters.
                 else:
                     if ('conv' in l['name']):
@@ -229,12 +240,12 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                  # Make y_ boollean
                  yb=tf.cast(y_,dtype=tf.bool)
                  # Get weight on correct class
-                 cor=tf.boolean_mask(TS[-1],yb)
+                 cor=tf.boolean_mask(TS[-1][0],yb)
                  # Hinge the weight on correct mask
                  cor = tf.nn.relu(1.-cor)
                  # Get weights on incorrect classes
-                 res=tf.boolean_mask(TS[-1],tf.logical_not(yb))
-                 shp=TS[-1].shape.as_list()
+                 res=tf.boolean_mask(TS[-1][0],tf.logical_not(yb))
+                 shp=TS[-1][0].shape.as_list()
                  shp[1]=shp[1]-1
                  # Reshape as B x (C-1)
                  res=tf.reshape(res,shape=shp)
@@ -243,7 +254,7 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                  # Add the two with factor.
                  loss=tf.reduce_mean(cor+PARS['off_class_fac']*res/(PARS['n_classes']-1),name="hinge")
                elif('blob' in PARS):
-                   fc2=TS[-1]
+                   fc2=TS[-1][0]
                    ya=y_[:,:,:,2]
                    loss = tf.reduce_mean(tf.reduce_sum(-y_[:,:,:,2] * fc2[:,:,:,2] + tf.math.softplus(fc2[:,:,:,2]), axis=[1, 2]))
                    loss = loss + tf.reduce_mean(
@@ -252,28 +263,28 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                                      axis=[1, 2]))
                elif('L2' in PARS):
                    # L2 loss.
-                   diff=y_-TS[-1]
+                   diff=y_-TS[-1][0]
                    l2_norm=tf.reduce_sum(diff * diff, axis=1)
                    loss=tf.reduce_mean(l2_norm)
                else:
                  # Softmax-logistic loss
-                 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=TS[-1]),name="sm")
+                 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y_, logits=TS[-1][0]),name="sm")
 
 
             # Accuracy computation for classification
             if ('hinge' in PARS):
                 with tf.variable_scope('helpers'):
-                    correct_prediction = tf.equal(tf.argmax(TS[-1], 1), tf.argmax(y_, 1))
+                    correct_prediction = tf.equal(tf.argmax(TS[-1][0], 1), tf.argmax(y_, 1))
                     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32),name="ACC")
             # Accuracy computation for parametric object detection
             else:
                 with tf.variable_scope('helpers'):
                     accuracy=[]
-                    hy=tf.greater(TS[-1][:,:,:,2],0)
+                    hy=tf.greater(TS[-1][0][:,:,:,2],0)
                     accuracy.append(tf.reduce_sum(tf.abs(hy - y_[:, :, :, 2]) *
                                                   y_[:,:,:2][:, :, :, 2]) / tf.reduce_sum(y_[:, :, :, 2]))
-                    accuracy.append(tf.reduce_sum((tf.abs(TS[-1][:, :, :, 0] - y_[:, :, :, 0]) +
-                                 np.abs(TS[-1][:, :, :, 1] - y_[:, :, :, 1])) * y_[:, :, :, 2]) /
+                    accuracy.append(tf.reduce_sum((tf.abs(TS[-1][0][:, :, :, 0] - y_[:, :, :, 0]) +
+                                 np.abs(TS[-1][0][:, :, :, 1] - y_[:, :, :, 1])) * y_[:, :, :, 2]) /
                                     tf.reduce_sum(y_[:, :, :, 2]))
             print('joint_parent',joint_parent)
             # joint_parent contains information on layers that are parents to two other layers which affects the gradient propagation.
@@ -284,9 +295,11 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
             return loss, accuracy, TS
 
 
-def update_only_non_zero(V,gra, step):
+def update_only_non_zero(V,gra, step,lim=None):
     up=V-step*gra
     up=K.tf.where(tf.equal(V,tf.constant(0.)),V,up)
+    if (lim is not None):
+        up=tf.clip_by_value(up,-lim,lim)
     assign_op = tf.assign(V,up)
     return assign_op
 
@@ -334,12 +347,12 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
                 bscale=PARS['b_nonlin_scale']
             gradconvW, gradx = grad_conv_layer(PARS['batch_size'],below=pre,back_propped=gradx,current=T,W=VS[vs], R=VS[vs+1],scale=scale, bscale=bscale)
             if (non_trainable is None or (non_trainable is not None and shortname not in non_trainable)):
-                assign_op_convW = update_only_non_zero(VS[vs],gradconvW,PARS['step_size'])
+                assign_op_convW = update_only_non_zero(VS[vs],gradconvW,PARS['step_size'],TS[ts][1])
                 OPLIST.append(assign_op_convW)
             # If an R variable exists and is a 4-dim array i.e. is active
             if (len(VS[vs+1].shape.as_list())==4):
              if (non_trainable is None or (non_trainable is not None and shortname not in non_trainable)):
-                assign_op_convR=update_only_non_zero(VS[vs+1],gradconvW, PARS['Rstep_size'])
+                assign_op_convR=update_only_non_zero(VS[vs+1],gradconvW, PARS['Rstep_size'],TS[ts][1])
                 OPLIST.append(assign_op_convR)
             if (PARS['debug']):
                 all_grad.append(gradx)
@@ -368,11 +381,11 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
                 scale = PARS['nonlin_scale']
                 bscale = PARS['b_nonlin_scale']
             gradfcW, gradx = grad_fully_connected(below=pre,back_propped=gradx,current=T, W=VS[vs],R=VS[vs+1], scale=scale, bscale=bscale)
-            assign_op_fcW = update_only_non_zero(VS[vs],gradfcW,PARS['step_size'])
+            assign_op_fcW = update_only_non_zero(VS[vs],gradfcW,PARS['step_size'],TS[ts][1])
             OPLIST.append(assign_op_fcW)
             # If an R variable exists and is a 2-dim matrix i.e. is active
             if (len(VS[vs+1].shape.as_list())==2):
-                assign_op_fcR = update_only_non_zero(VS[vs+1],gradfcW,PARS['Rstep_size'])
+                assign_op_fcR = update_only_non_zero(VS[vs+1],gradfcW,PARS['Rstep_size'],TS[ts][1])
                 OPLIST.append(assign_op_fcR)
             if (PARS['debug']):
                 all_grad.append(gradx)
@@ -390,11 +403,11 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             else:
                 gradfcW, gradx, gradfcR = grad_sparse_fully_connected(below=pre,back_propped=gradx,current=T, F_inds=VS[vs], F_vals=VS[vs+1], F_dims=VS[vs+2], W_inds=VS[vs+3], R_inds=VS[vs+6],scale=scale, bscale=bscale)
 
-            assign_op_fcW = update_only_non_zero(VS[vs+4],gradfcW,PARS['step_size'])
+            assign_op_fcW = update_only_non_zero(VS[vs+4],gradfcW,PARS['step_size'],TS[ts][1])
             OPLIST.append(assign_op_fcW)
             # If an R variable exists and is a 2-dim matrix i.e. is active
             if (doR):
-                assign_op_fcR = update_only_non_zero(VS[vs+7],gradfcR,PARS['Rstep_size'])
+                assign_op_fcR = update_only_non_zero(VS[vs+7],gradfcR,PARS['Rstep_size'],TS[ts][1])
                 OPLIST.append(assign_op_fcR)
             if (PARS['debug']):
                 all_grad.append(gradx)

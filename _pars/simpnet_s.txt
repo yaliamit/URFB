@@ -10,7 +10,7 @@ debug:False
 num_train:50000
 off_class_fac:1.
 hinge:1.
-force_global_prob:(1.,0.)
+force_global_prob:(1.,1.)
 nonlin_scale:.5
 b_nonlin_scale:0
 sparse:conv1R,

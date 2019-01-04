@@ -9,6 +9,7 @@ def conv_layer(input,batch_size,filter_size=[3,3],num_features=[1],prob=[1.,-1.]
     # Get number of input features from input and add to shape of new layer
     shape=filter_size+[input.get_shape().as_list()[-1],num_features]
     shapeR=shape
+    lim=np.sqrt(6./(shape[0]*shape[1]*(shape[2]+shape[3])))
     if (prob[1]==-1.):
         shapeR=[1,1]
     if (Rin is None):
@@ -25,7 +26,7 @@ def conv_layer(input,batch_size,filter_size=[3,3],num_features=[1],prob=[1.,-1.]
     conv = tf.nn.conv2d(input, W, strides=[1, 1, 1, 1], padding='SAME')
     if (scale>0):
         conv = tf.clip_by_value(scale * conv, -1., 1.)
-    return(conv)
+    return [conv,lim]
 
 def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale=0):
     w_shape=W.shape
@@ -54,6 +55,7 @@ def fully_connected_layer(input,batch_size, num_features,prob=[1.,-1.], scale=0,
     flat_dim=np.int32(np.array(input.get_shape().as_list())[1:].prod())
     input_flattened = tf.reshape(input, shape=[batch_size,flat_dim])
     shape=[flat_dim,num_features]
+    lim = np.sqrt(6. /(shape[0]+shape[1]))
     shapeR=shape
     if (prob[1]==-1.):
         shapeR=[1]
@@ -68,7 +70,7 @@ def fully_connected_layer(input,batch_size, num_features,prob=[1.,-1.], scale=0,
     fc = tf.matmul(input_flattened, W_fc)
     if (scale>0):
         fc = tf.clip_by_value(scale * fc, -1., 1.)
-    return(fc)
+    return [fc,lim]
 
 
 
