@@ -4,12 +4,18 @@ from keras import backend as K
 from keras.layers.convolutional import UpSampling2D
 import sys
 
+def comp_lim(shape):
+    if (len(shape)==4):
+        lim = np.sqrt(6. / (shape[0] * shape[1] * (shape[2] + shape[3])))
+    else:
+        lim = np.sqrt(6. / (shape[0] + shape[1]))
+    return 1.5*lim
 def conv_layer(input,batch_size,filter_size=[3,3],num_features=[1],prob=[1.,-1.],scale=0, Win=None, Rin=None):
 
     # Get number of input features from input and add to shape of new layer
     shape=filter_size+[input.get_shape().as_list()[-1],num_features]
     shapeR=shape
-    lim=np.sqrt(6./(shape[0]*shape[1]*(shape[2]+shape[3])))
+    lim=comp_lim(shape)
     if (prob[1]==-1.):
         shapeR=[1,1]
     if (Rin is None):
@@ -55,7 +61,7 @@ def fully_connected_layer(input,batch_size, num_features,prob=[1.,-1.], scale=0,
     flat_dim=np.int32(np.array(input.get_shape().as_list())[1:].prod())
     input_flattened = tf.reshape(input, shape=[batch_size,flat_dim])
     shape=[flat_dim,num_features]
-    lim = np.sqrt(6. /(shape[0]+shape[1]))
+    lim=comp_lim(shape)
     shapeR=shape
     if (prob[1]==-1.):
         shapeR=[1]

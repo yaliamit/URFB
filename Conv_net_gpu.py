@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from keras import backend as K
-from Conv_layers import conv_layer, grad_conv_layer, fully_connected_layer, grad_fully_connected, grad_pool, grad_pool_disjoint_fast
+from Conv_layers import comp_lim, conv_layer, grad_conv_layer, fully_connected_layer, grad_fully_connected, grad_pool, grad_pool_disjoint_fast
 from Conv_layers import sparse_fully_connected_layer, grad_sparse_fully_connected, MaxPoolingandMask, MaxPoolingandMask_disjoint_fast, real_drop
 
 def find_ts(name,TS):
@@ -25,14 +25,14 @@ def find_wr(name,VS):
     return W,R
 
 def re_initialize(shape):
-    std=np.sqrt(6./((shape[2]+shape[3])*shape[0]*shape[1]))
+    std=comp_lim(shape)
     Wout=np.float32(np.random.uniform(-std,std,shape))
     Rout=np.float32(np.random.uniform(-std,std,shape))
 
     return Wout, Rout, std
 
 def re_initialize_dense(shape):
-    std=np.sqrt(6./(shape[0]+shape[1]))
+    std=comp_lim(shape)
     Wout=np.float32(np.random.uniform(-std,std,shape))
     Rout=np.float32(np.random.uniform(-std,std,shape))
 
@@ -46,7 +46,7 @@ def get_parameters_s(VSIN,SP,TS, re_randomize=None):
     for sp in SP:
             Win,Rin=find_wr(sp,VSIN)
             shape=Win.shape.as_list()
-            lim = np.sqrt(6. / ((shape[2] + shape[3]) * shape[0] * shape[1]))
+            lim = comp_lim(shape)
             wrs=[Win.eval(),Rin.eval(),lim]
             if (re_randomize is not None):
               if sp in re_randomize:
@@ -73,10 +73,7 @@ def get_parameters(VSIN,PARS, re_randomize=None):
                     wrs = [Win, Rin, lim]
                 else:
                     shape=Win.shape.as_list()
-                    if ('conv' in l['name']):
-                        lim=np.sqrt(6./((shape[2]+shape[3])*shape[0]*shape[1]))
-                    else:
-                        lim=np.sqrt(6. / (shape[0] + shape[1]))
+                    lim=comp_lim(shape)
                     wrs = [Win, Rin, lim]
 
                 WR[l['name']]=wrs
@@ -307,7 +304,7 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
     # Get gradient of loss with respect to final output layer using tf gradient
     # The rest will be explicit backprop
     
-    gradX=tf.gradients(loss,TS[0])
+    gradX=tf.gradients(loss,TS[0][0])
 
     gradx=gradX[0]
     lts=len(TS)
