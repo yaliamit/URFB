@@ -295,8 +295,8 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
 def update_only_non_zero(V,gra, step,lim=None):
     up=V-step*gra
     up=K.tf.where(tf.equal(V,tf.constant(0.)),V,up)
-    if (lim is not None):
-       up=tf.clip_by_value(up,-2*lim,2*lim)
+    # if (lim is not None):
+    #    up=tf.clip_by_value(up,-2*lim,2*lim)
     assign_op = tf.assign(V,up)
     return assign_op
 
