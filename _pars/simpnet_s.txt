@@ -13,7 +13,7 @@ hinge:1.
 force_global_prob:(1.,1.)
 nonlin_scale:.5
 b_nonlin_scale:0
-#sparse:conv1R,
+sparse:conv1R,
 re_randomize:conv1R,newdensp,newdensf
 name:input1
 name:conv1R;num_filters:32;filter_size:(5,5);non_linearity:tanh;parent:input1
