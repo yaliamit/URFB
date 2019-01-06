@@ -116,7 +116,7 @@ with tf.device(gpu_device):
                 Conv_sparse_aux.F_transpose_and_clip(SS,sess,SDS)
                 run_epoch(val,i,OPS,PARS,sess,type='Val')
                 sys.stdout.flush()
-                if (np.mod(i,100)==0):
+                if (np.mod(i,50)==0):
                     test_correlations(OPS)
         Conv_sparse_aux.get_weight_stats(SS)
         #for sp in PARS['sparse']:
