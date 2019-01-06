@@ -74,7 +74,7 @@ def get_parameters(VSIN,PARS, re_randomize=None):
                 else:
                     shape=Win.shape.as_list()
                     lim=comp_lim(shape)
-                    wrs = [Win, Rin, lim]
+                    wrs = [Win.eval(), Rin.eval(), lim]
 
                 WR[l['name']]=wrs
 
