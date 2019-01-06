@@ -12,7 +12,7 @@ off_class_fac:1.
 hinge:1.
 sparse:conv0aR,conv2R,conv2aR,conv3R,conv3aR,
 non_trainable:conv0R,
-re_randomize:conv2R,conv2aR,conv3R,conv3aR,newdensp,newdensf
+re_randomize:conv0aR,conv2R,conv2aR,conv3R,conv3aR,newdensp,newdensf
 num_epochs_sparse:1000
 #shift:25
 force_global_prob:(1.,1.)
