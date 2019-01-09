@@ -8,6 +8,19 @@ import sys
 # input field. This is OK since \sigma' is just 1 or 0 and sigma is just identity truncated at 1.
 # But for general non-linearities this is WRONG! current should be the field not the output.
 
+def non_lin(inp,scale):
+    if (scale>0):
+        outp = tf.clip_by_value(scale * inp, -1., 1.)
+    else:
+        outp=inp
+    return outp
+
+def non_lin_deriv_times_backprop(out_backprop,current,scale):
+    if (scale>0):
+        on_zero = K.zeros_like(out_backprop)
+        out_backprop = scale * K.tf.where(tf.equal(tf.abs(out_backprop), 1.), on_zero, out_backprop)
+    return out_backprop
+
 def comp_lim(shape):
     if (len(shape)==4):
         lim = np.sqrt(6. / (shape[0] * shape[1] * (shape[2] + shape[3])))
@@ -34,9 +47,8 @@ def conv_layer(input,batch_size,filter_size=[3,3],num_features=[1],prob=[1.,-1.]
 
     #b = tf.get_variable('b',shape=[num_features],initializer=tf.zeros_initializer)
     conv = tf.nn.conv2d(input, W, strides=[1, 1, 1, 1], padding='SAME')
-    if (scale>0):
-        conv = tf.clip_by_value(scale * conv, -1., 1.)
-    return [conv,lim]
+    conv_nonlin=non_lin(conv,scale)
+    return [conv_nonlin,conv, lim]
 
 def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale=0):
     w_shape=W.shape
@@ -44,9 +56,8 @@ def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale
     back_prop_shape=[-1]+(current.shape.as_list())[1:]
     out_backprop=tf.reshape(back_propped,back_prop_shape)
     # If abs of feedforward input is larger than 1 the derivative of the transfer function is 0.
-    if (scale>0):
-        on_zero = K.zeros_like(out_backprop)
-        out_backprop = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, out_backprop)
+
+    out_backprop=non_lin_deriv_times_backprop(out_backprop,current,scale)
 
     gradconvW=tf.nn.conv2d_backprop_filter(input=below,filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
     input_shape=[batch_size]+(below.shape.as_list())[1:]
@@ -78,9 +89,9 @@ def fully_connected_layer(input,batch_size, num_features,prob=[1.,-1.], scale=0,
     else:
         W_fc = tf.get_variable('W',initializer=Win)
     fc = tf.matmul(input_flattened, W_fc)
-    if (scale>0):
-        fc = tf.clip_by_value(scale * fc, -1., 1.)
-    return [fc,lim]
+    fc_nonlin=non_lin(fc,scale)
+
+    return [fc_nonlin,fc,lim]
 
 
 
@@ -89,9 +100,7 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0):
 
     belowf=tf.contrib.layers.flatten(below)
     # Gradient of weights of dense layer
-    if (scale>0):
-        on_zero = K.zeros_like(back_propped)
-        back_propped = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, back_propped)
+    back_propped=non_lin_deriv_times_backprop(back_propped,current,scale)
 
     gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
     # Propagated error to conv layer.
@@ -134,9 +143,9 @@ def sparse_fully_connected_layer(input,batch_size, num_units, num_features,prob=
     fc = tf.transpose(tf.sparse_tensor_dense_matmul(tf.SparseTensor(indices=W_inds,values=W_vals,dense_shape=W_dims),tf.transpose(input_flattened)))
     fc = tf.reshape(fc,input_shape[0:3]+[num_features,])
     # If non-linearity
-    if (scale>0):
-        fc = tf.clip_by_value(scale * fc, -1., 1.)
-    return(fc)
+    fc_nonlin=non_lin(fc,scale)
+
+    return(fc_nonlin,fc)
 
 # Gradient for sparse fully connected.
 def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_dims, W_inds, R_inds, scale=0, bscale=0):
@@ -144,9 +153,7 @@ def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_
     # Flatten whatever is coming from below
     belowf=tf.contrib.layers.flatten(below)
     # If non-linearity
-    if (scale>0):
-        on_zero = K.zeros_like(back_propped)
-        back_propped = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, back_propped)
+    back_propped=non_lin_deriv_times_backprop(back_propped,current,scale)
 
     # Flatten whatever is coming from abbove
     back_proppedf=tf.contrib.layers.flatten(back_propped)

@@ -81,10 +81,6 @@ def get_parameters(VSIN,PARS, re_randomize=None):
     return(WR)
 
 
-
-
-
-
 def find_joint_parent(l,parent,PARS):
       
         for ly in PARS['layers']:
@@ -318,7 +314,11 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
         all_grad.append(gradx)
     for ts in range(lts):
         T=TS[ts]
+        # If len T=3 then there is a field input and the non-linear output, current should be the field
+        if (type(T) is list and len(T)==3):
+            current=TS[ts][1]
         name,T=get_name(T)
+
         if (ts<lts-1):
                 prename,pre=get_name(TS[ts+1])
                 if ('Equal' in prename):
@@ -342,14 +342,14 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
                 shortname=name[0:name.find('nonlin')]
                 scale=PARS['nonlin_scale']
                 bscale=PARS['b_nonlin_scale']
-            gradconvW, gradx = grad_conv_layer(PARS['batch_size'],below=pre,back_propped=gradx,current=T,W=VS[vs], R=VS[vs+1],scale=scale, bscale=bscale)
+            gradconvW, gradx = grad_conv_layer(PARS['batch_size'],below=pre,back_propped=gradx,current=current,W=VS[vs], R=VS[vs+1],scale=scale, bscale=bscale)
             if (non_trainable is None or (non_trainable is not None and shortname not in non_trainable)):
-                assign_op_convW = update_only_non_zero(VS[vs],gradconvW,PARS['step_size'],TS[ts][1])
+                assign_op_convW = update_only_non_zero(VS[vs],gradconvW,PARS['step_size'],TS[ts][2])
                 OPLIST.append(assign_op_convW)
             # If an R variable exists and is a 4-dim array i.e. is active
             if (len(VS[vs+1].shape.as_list())==4):
              if (non_trainable is None or (non_trainable is not None and shortname not in non_trainable)):
-                assign_op_convR=update_only_non_zero(VS[vs+1],gradconvW, PARS['Rstep_size'],TS[ts][1])
+                assign_op_convR=update_only_non_zero(VS[vs+1],gradconvW, PARS['Rstep_size'],TS[ts][2])
                 OPLIST.append(assign_op_convR)
             if (PARS['debug']):
                 all_grad.append(gradx)
@@ -377,12 +377,12 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             if ('nonlin' in name):
                 scale = PARS['nonlin_scale']
                 bscale = PARS['b_nonlin_scale']
-            gradfcW, gradx = grad_fully_connected(below=pre,back_propped=gradx,current=T, W=VS[vs],R=VS[vs+1], scale=scale, bscale=bscale)
-            assign_op_fcW = update_only_non_zero(VS[vs],gradfcW,PARS['step_size'],TS[ts][1])
+            gradfcW, gradx = grad_fully_connected(below=pre,back_propped=gradx,current=current, W=VS[vs],R=VS[vs+1], scale=scale, bscale=bscale)
+            assign_op_fcW = update_only_non_zero(VS[vs],gradfcW,PARS['step_size'],TS[ts][2])
             OPLIST.append(assign_op_fcW)
             # If an R variable exists and is a 2-dim matrix i.e. is active
             if (len(VS[vs+1].shape.as_list())==2):
-                assign_op_fcR = update_only_non_zero(VS[vs+1],gradfcW,PARS['Rstep_size'],TS[ts][1])
+                assign_op_fcR = update_only_non_zero(VS[vs+1],gradfcW,PARS['Rstep_size'],TS[ts][2])
                 OPLIST.append(assign_op_fcR)
             if (PARS['debug']):
                 all_grad.append(gradx)
@@ -396,15 +396,15 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
                 scale = PARS['nonlin_scale']
                 bscale = PARS['b_nonlin_scale']
             if (PARS['force_global_prob'][0]==1. or not doR):
-                gradfcW, gradx, gradfcR = grad_sparse_fully_connected(below=pre,back_propped=gradx,current=T, F_inds=VS[vs], F_vals=VS[vs+1], F_dims=VS[vs+2], W_inds=VS[vs+3], R_inds=None,scale=scale, bscale=bscale)
+                gradfcW, gradx, gradfcR = grad_sparse_fully_connected(below=pre,back_propped=gradx,current=current, F_inds=VS[vs], F_vals=VS[vs+1], F_dims=VS[vs+2], W_inds=VS[vs+3], R_inds=None,scale=scale, bscale=bscale)
             else:
-                gradfcW, gradx, gradfcR = grad_sparse_fully_connected(below=pre,back_propped=gradx,current=T, F_inds=VS[vs], F_vals=VS[vs+1], F_dims=VS[vs+2], W_inds=VS[vs+3], R_inds=VS[vs+6],scale=scale, bscale=bscale)
+                gradfcW, gradx, gradfcR = grad_sparse_fully_connected(below=pre,back_propped=gradx,current=current, F_inds=VS[vs], F_vals=VS[vs+1], F_dims=VS[vs+2], W_inds=VS[vs+3], R_inds=VS[vs+6],scale=scale, bscale=bscale)
 
-            assign_op_fcW = update_only_non_zero(VS[vs+4],gradfcW,PARS['step_size'],TS[ts][1])
+            assign_op_fcW = update_only_non_zero(VS[vs+4],gradfcW,PARS['step_size'],TS[ts][2])
             OPLIST.append(assign_op_fcW)
             # If an R variable exists and is a 2-dim matrix i.e. is active
             if (doR):
-                assign_op_fcR = update_only_non_zero(VS[vs+7],gradfcR,PARS['Rstep_size'],TS[ts][1])
+                assign_op_fcR = update_only_non_zero(VS[vs+7],gradfcR,PARS['Rstep_size'],TS[ts][2])
                 OPLIST.append(assign_op_fcR)
             if (PARS['debug']):
                 all_grad.append(gradx)

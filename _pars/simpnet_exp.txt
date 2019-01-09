@@ -1,12 +1,12 @@
 seed:45239
-num_epochs:0
+num_epochs:10
 data_set:cifar10
 batch_size:500
 sparse_batch_size:50
 step_size:.1
 sparse_step_size:.1
 debug:False
-num_train:50000
+num_train:5000
 off_class_fac:1.
 hinge:1.
 force_global_prob:(1.,1.)
@@ -19,8 +19,6 @@ name:conv1R;num_filters:8;filter_size:(3,3);non_linearity:tanh;parent:input1
 name:conv1aR;num_filters:8;filter_size:(3,3);non_linearity:tanh;parent:conv1R
 name:pool1;pool_size:(3, 3);stride:(3, 3);parent:conv1aR
 name:drop1;drop:0.;parent:pool1
-name:newdensp;num_units:500;non_linearity:tanh;parent:drop1
+name:newdensp;num_units:200;non_linearity:tanh;parent:drop1
 name:drop2;drop:0.;parent:newdensp
-name:newdensp1;num_units:200;non_linearity:tanh;parent:drop2
-name:drop3;drop:0.;parent:newdensp1
-name:newdensf;num_units:10;parent:drop3;final:final
+name:newdensf;num_units:10;parent:drop2;final:final
