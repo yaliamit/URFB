@@ -107,7 +107,7 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0):
 
     #gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
     gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
-    gradfcR=tf.matmul(tf.relu(tf.transpose(belowf)),back_propped)
+    gradfcR=tf.matmul(tf.nn.relu(tf.transpose(belowf)),back_propped)
     # Propagated error to conv layer.
     filter=W
     if (len(R.shape.as_list())==2):
