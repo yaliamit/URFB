@@ -12,7 +12,7 @@ high=2.
 
 def non_lin(inp,scale):
     if (scale>0):
-        outp = tf.clip_by_value(scale * inp, low, high)
+        outp = tf.clip_by_value(scale * inp + 1., low, high)
     else:
         outp=inp
     return outp
