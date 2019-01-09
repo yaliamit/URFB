@@ -7,7 +7,7 @@ import sys
 # Everywhere we apply the derivative of the non-linearity it is done on the output not on
 # input field. This is OK since \sigma' is just 1 or 0 and sigma is just identity truncated at 1.
 # But for general non-linearities this is WRONG! current should be the field not the output.
-low=0.
+low=-1.
 high=1.
 
 def non_lin(inp,scale):
@@ -105,7 +105,9 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0):
     # Gradient of weights of dense layer
     back_propped=non_lin_deriv_times_backprop(back_propped,current,scale)
 
+    #gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
     gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
+    gradfcR=tf.matmul(tf.relu(tf.transpose(belowf)),back_propped)
     # Propagated error to conv layer.
     filter=W
     if (len(R.shape.as_list())==2):
@@ -113,7 +115,7 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0):
     gradfcx=tf.matmul(back_propped,tf.transpose(filter))
     if (bscale>0):
         gradfcx = tf.clip_by_value(bscale * gradfcx, -1., 1.)
-    return gradfcW, gradfcx
+    return gradfcW, gradfcR, gradfcx
 
 def sparse_fully_connected_layer(input,batch_size, num_units, num_features,prob=[1.,-1.], scale=0,Win=None,Rin=None, Fin=None):
     # Make sure input is flattened.
