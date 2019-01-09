@@ -63,8 +63,8 @@ def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale
     out_backprop=non_lin_deriv_times_backprop(out_backprop,current,scale)
 
     gradconvW=tf.nn.conv2d_backprop_filter(input=below,filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
-    gradconvR=gradconvW
-    #gradconvR=tf.nn.conv2d_backprop_filter(input=tf.nn.relu(below),filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
+    #gradconvR=gradconvW
+    gradconvR=tf.nn.conv2d_backprop_filter(input=tf.nn.relu(below),filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
 
     input_shape=[batch_size]+(below.shape.as_list())[1:]
 
@@ -110,8 +110,8 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0):
 
     #gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
     gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
-    #gradfcR=tf.matmul(tf.nn.relu(tf.transpose(belowf)),back_propped)
-    gradfcR=gradfcW
+    gradfcR=tf.matmul(tf.nn.relu(tf.transpose(belowf)),back_propped)
+    #gradfcR=gradfcW
     # Propagated error to conv layer.
     filter=W
     if (len(R.shape.as_list())==2):
