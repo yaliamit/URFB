@@ -173,6 +173,7 @@ def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_
     # Same for the gradient of R.
     if (R_inds is not None):
         below_list = tf.gather(belowf, R_inds[:, 1], axis=1)
+        below_list=tf.nn.relu(below_list)
         back_propped_list = tf.gather(back_proppedf, R_inds[:, 0], axis=1)
         gradfcR = tf.reduce_sum(tf.multiply(below_list, back_propped_list), axis=0)
     else:
