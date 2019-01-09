@@ -7,10 +7,12 @@ import sys
 # Everywhere we apply the derivative of the non-linearity it is done on the output not on
 # input field. This is OK since \sigma' is just 1 or 0 and sigma is just identity truncated at 1.
 # But for general non-linearities this is WRONG! current should be the field not the output.
+low=-1.
+high=1.
 
 def non_lin(inp,scale):
     if (scale>0):
-        outp = tf.clip_by_value(scale * inp, -1., 1.)
+        outp = tf.clip_by_value(scale * inp, low, high)
     else:
         outp=inp
     return outp
@@ -18,7 +20,7 @@ def non_lin(inp,scale):
 def non_lin_deriv_times_backprop(out_backprop,current,scale):
     if (scale>0):
         on_zero = K.zeros_like(out_backprop)
-        out_backprop = scale * K.tf.where(tf.logical_or(tf.greater(current, 1.),tf.less(current,-1.)), on_zero, out_backprop)
+        out_backprop = scale * K.tf.where(tf.logical_or(tf.greater(current, high),tf.less(current,low)), on_zero, out_backprop)
         #out_backprop = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, out_backprop)
     return out_backprop
 
