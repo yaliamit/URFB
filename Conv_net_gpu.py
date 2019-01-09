@@ -310,8 +310,8 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
     grad_hold_var={}
     joint_parent=None
     all_grad=[]
-    if (PARS['debug']):
-        all_grad.append(gradx)
+    #if (PARS['debug']):
+    #    all_grad.append(gradx)
     for ts in range(lts):
         T=TS[ts]
         # If len T=3 then there is a field input and the non-linear output, current should be the field
@@ -342,24 +342,24 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
                 shortname=name[0:name.find('nonlin')]
                 scale=PARS['nonlin_scale']
                 bscale=PARS['b_nonlin_scale']
-            gradconvW, gradx = grad_conv_layer(PARS['batch_size'],below=pre,back_propped=gradx,current=current,W=VS[vs], R=VS[vs+1],scale=scale, bscale=bscale)
+            gradconvW, gradconvR, gradx = grad_conv_layer(PARS['batch_size'],below=pre,back_propped=gradx,current=current,W=VS[vs], R=VS[vs+1],scale=scale, bscale=bscale)
             if (non_trainable is None or (non_trainable is not None and shortname not in non_trainable)):
                 assign_op_convW = update_only_non_zero(VS[vs],gradconvW,PARS['step_size'],TS[ts][2])
                 OPLIST.append(assign_op_convW)
             # If an R variable exists and is a 4-dim array i.e. is active
             if (len(VS[vs+1].shape.as_list())==4):
              if (non_trainable is None or (non_trainable is not None and shortname not in non_trainable)):
-                assign_op_convR=update_only_non_zero(VS[vs+1],gradconvW, PARS['Rstep_size'],TS[ts][2])
+                assign_op_convR=update_only_non_zero(VS[vs+1],gradconvR, PARS['Rstep_size'],TS[ts][2])
                 OPLIST.append(assign_op_convR)
-            if (PARS['debug']):
-                all_grad.append(gradx)
+            #if (PARS['debug']):
+            #    all_grad.append(gradx)
             ts+=1
             vs+=2
         elif ('drop' in name):
             Z = tf.equal(T, tf.constant(0.))
             gradx=K.tf.where(Z,T,tf.multiply(tf.reshape(gradx,T.shape),TS[ts][1]))
-            if (PARS['debug']):
-                all_grad.append(gradx)
+            #if (PARS['debug']):
+            #    all_grad.append(gradx)
         elif ('Equal' in name):
             mask=T
             ts+=1
@@ -368,8 +368,8 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
                 gradx=grad_pool_disjoint_fast(gradx,T,mask,pre,TS[ts][1])
             else:
                 gradx=grad_pool(gradx,T,mask,pool_size=TS[ts][1],stride=TS[ts][2])
-            if (PARS['debug']):
-                all_grad.append(gradx)
+            #if (PARS['debug']):
+            #    all_grad.append(gradx)
             ts+=1
         elif ('dens' in name):
             scale = 0
@@ -385,7 +385,8 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
                 assign_op_fcR = update_only_non_zero(VS[vs+1],gradfcR,PARS['Rstep_size'],TS[ts][2])
                 OPLIST.append(assign_op_fcR)
             if (PARS['debug']):
-                all_grad.append(gradx)
+                all_grad.append(gradfcW)
+                all_grad.append(gradfcR)
             ts+=1
             vs+=2
         elif ('sparse' in name):
@@ -406,8 +407,8 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             if (doR):
                 assign_op_fcR = update_only_non_zero(VS[vs+7],gradfcR,PARS['Rstep_size'],TS[ts][2])
                 OPLIST.append(assign_op_fcR)
-            if (PARS['debug']):
-                all_grad.append(gradx)
+            #if (PARS['debug']):
+            #    all_grad.append(gradx)
             ts+=1
             vs+=9
         if (name in PARS['joint_parent']):
