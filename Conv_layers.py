@@ -4,6 +4,10 @@ from keras import backend as K
 from keras.layers.convolutional import UpSampling2D
 import sys
 
+# Everywhere we apply the derivative of the non-linearity it is done on the output not on
+# input field. This is OK since \sigma' is just 1 or 0 and sigma is just identity truncated at 1.
+# But for general non-linearities this is WRONG! current should be the field not the output.
+
 def comp_lim(shape):
     if (len(shape)==4):
         lim = np.sqrt(6. / (shape[0] * shape[1] * (shape[2] + shape[3])))
