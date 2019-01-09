@@ -8,11 +8,11 @@ import sys
 # input field. This is OK since \sigma' is just 1 or 0 and sigma is just identity truncated at 1.
 # But for general non-linearities this is WRONG! current should be the field not the output.
 low=0.
-high=2.
+high=1.
 
 def non_lin(inp,scale):
     if (scale>0):
-        outp = tf.clip_by_value(scale * inp + 1., low, high)
+        outp = tf.clip_by_value(scale * inp, low, high)
     else:
         outp=inp
     return outp
