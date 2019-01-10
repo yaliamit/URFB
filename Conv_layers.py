@@ -9,6 +9,7 @@ import sys
 # But for general non-linearities this is WRONG! current should be the field not the output.
 low=-1.
 high=1.
+sym=True
 
 def non_lin(inp,scale):
     if (scale>0):
@@ -63,8 +64,10 @@ def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale
     out_backprop=non_lin_deriv_times_backprop(out_backprop,current,scale)
 
     gradconvW=tf.nn.conv2d_backprop_filter(input=below,filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
-    #gradconvR=gradconvW
-    gradconvR=tf.nn.conv2d_backprop_filter(input=tf.nn.relu(below),filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
+    if (sym):
+        gradconvR=gradconvW
+    else:
+        gradconvR=tf.nn.conv2d_backprop_filter(input=tf.nn.relu(below),filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
 
     input_shape=[batch_size]+(below.shape.as_list())[1:]
 
@@ -104,14 +107,18 @@ def fully_connected_layer(input,batch_size, num_features,prob=[1.,-1.], scale=0,
 
 def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0):
 
+    print("SYM",sym)
     belowf=tf.contrib.layers.flatten(below)
     # Gradient of weights of dense layer
     back_propped=non_lin_deriv_times_backprop(back_propped,current,scale)
 
     #gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
     gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
-    gradfcR=tf.matmul(tf.nn.relu(tf.transpose(belowf)),back_propped)
-    #gradfcR=gradfcW
+    if (sym):
+        gradfcR=gradfcW
+    else:
+        gradfcR=tf.matmul(tf.nn.relu(tf.transpose(belowf)),back_propped)
+
     # Propagated error to conv layer.
     filter=W
     if (len(R.shape.as_list())==2):
@@ -154,7 +161,7 @@ def sparse_fully_connected_layer(input,batch_size, num_units, num_features,prob=
     # If non-linearity
     fc_nonlin=non_lin(fc,scale)
 
-    return(fc_nonlin,fc)
+    return [fc_nonlin,fc]
 
 # Gradient for sparse fully connected.
 def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_dims, W_inds, R_inds, scale=0, bscale=0):
@@ -173,7 +180,8 @@ def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_
     # Same for the gradient of R.
     if (R_inds is not None):
         below_list = tf.gather(belowf, R_inds[:, 1], axis=1)
-        below_list=tf.nn.relu(below_list)
+        if (not sym):
+            below_list=tf.nn.relu(below_list)
         back_propped_list = tf.gather(back_proppedf, R_inds[:, 0], axis=1)
         gradfcR = tf.reduce_sum(tf.multiply(below_list, back_propped_list), axis=0)
     else:

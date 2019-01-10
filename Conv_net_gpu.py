@@ -156,7 +156,8 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                         scope_name = scope_name+ 'nonlin'
                     with tf.variable_scope(scope_name):
                         num_units=(Win.dense_shape[0]).eval()
-                        TS.append([sparse_fully_connected_layer(parent,PARS['batch_size'], num_units=num_units, num_features=l['num_filters'], prob=prob,scale=scale, Win=Win,Rin=Rin, Fin=Fin),lim])
+                        TS.append(sparse_fully_connected_layer(parent,PARS['batch_size'], num_units=num_units,
+                                                                num_features=l['num_filters'], prob=prob,scale=scale, Win=Win,Rin=Rin, Fin=Fin)+[lim,])
                 # Otherwise create regular layer either from scratch or with existing parameters.
                 else:
                     if ('conv' in l['name']):
