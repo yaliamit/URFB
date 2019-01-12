@@ -1,5 +1,5 @@
 seed:45239
-num_epochs:0
+num_epochs:100
 num_epochs_sparse:1
 data_set:cifar10
 batch_size:500
@@ -13,12 +13,13 @@ hinge:1.
 force_global_prob:(1.,1.)
 nonlin_scale:.5
 b_nonlin_scale:0.
-sparse:conv1R,con1aR,
+#sparse:conv1R,con1aR,
 re_randomize:conv1aR,newdensp,newdensf
 name:input1
-name:conv1R;num_filters:32;filter_size:(3,3);non_linearity:tanh;parent:input1
-name:conv1aR;num_filters:32;filter_size:(3,3);non_linearity:tanh;parent:conv1R
-name:pool1;pool_size:(3, 3);stride:(3, 3);parent:conv1aR
+name:conv1R;num_filters:16;filter_size:(3,3);non_linearity:tanh;parent:input1
+name:pool1;pool_size:(2, 2);stride:(2, 2);parent:conv1aR
+name:conv1aR;num_filters:16;filter_size:(3,3);non_linearity:tanh;parent:conv1R
+name:pool1;pool_size:(2, 2);stride:(2, 2);parent:conv1aR
 name:drop1;drop:0.;parent:pool1
 name:newdensp;num_units:500;non_linearity:tanh;parent:drop1
 name:drop2;drop:0.;parent:newdensp
