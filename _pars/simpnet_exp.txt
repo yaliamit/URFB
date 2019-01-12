@@ -14,7 +14,7 @@ force_global_prob:(1.,1.)
 nonlin_scale:.5
 b_nonlin_scale:0.
 sparse:conv1R,con1aR,
-re_randomize:conv1aR,newdensp,newdensf
+re_randomize:conv1R,conv1aR,newdensp,newdensf
 name:input1
 name:conv1R;num_filters:16;filter_size:(3,3);non_linearity:tanh;parent:input1
 name:pool1;pool_size:(2, 2);stride:(2, 2);parent:conv1R
