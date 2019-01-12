@@ -17,10 +17,10 @@ b_nonlin_scale:0.
 re_randomize:conv1aR,newdensp,newdensf
 name:input1
 name:conv1R;num_filters:16;filter_size:(3,3);non_linearity:tanh;parent:input1
-name:pool1;pool_size:(2, 2);stride:(2, 2);parent:conv1aR
-name:conv1aR;num_filters:16;filter_size:(3,3);non_linearity:tanh;parent:conv1R
-name:pool1;pool_size:(2, 2);stride:(2, 2);parent:conv1aR
-name:drop1;drop:0.;parent:pool1
+name:pool1;pool_size:(2, 2);stride:(2, 2);parent:conv1R
+name:conv1aR;num_filters:16;filter_size:(3,3);non_linearity:tanh;parent:pool1
+name:pool2;pool_size:(2, 2);stride:(2, 2);parent:conv1aR
+name:drop1;drop:0.;parent:pool2
 name:newdensp;num_units:500;non_linearity:tanh;parent:drop1
 name:drop2;drop:0.;parent:newdensp
 name:newdensf;num_units:10;parent:drop2;final:final
