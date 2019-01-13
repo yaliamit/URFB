@@ -120,7 +120,7 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0):
         gradfcW = tf.matmul(tf.transpose(belowf), back_propped)
         gradfcR=gradfcW
     else:
-        tbelow=tf.transpose(below)
+        tbelow=tf.transpose(belowf)
         gradfcW = tf.matmul(tf.nn.relu(tbelow), back_propped)
         gradfcR=tf.matmul(tbelow,tf.nn.relu(back_propped))
 
