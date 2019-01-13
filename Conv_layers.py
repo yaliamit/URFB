@@ -63,11 +63,14 @@ def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale
 
     out_backprop=non_lin_deriv_times_backprop(out_backprop,current,scale)
 
-    gradconvW=tf.nn.conv2d_backprop_filter(input=below,filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
     if (sym):
+        gradconvW = tf.nn.conv2d_backprop_filter(input=below, filter_sizes=w_shape, out_backprop=out_backprop,
+                                                 strides=strides, padding='SAME')
         gradconvR=gradconvW
     else:
-        gradconvR=tf.nn.conv2d_backprop_filter(input=tf.nn.relu(below),filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
+        gradconvW = tf.nn.conv2d_backprop_filter(input=tf.nn.relu(below), filter_sizes=w_shape, out_backprop=out_backprop,
+                                                 strides=strides, padding='SAME')
+        gradconvR=tf.nn.conv2d_backprop_filter(input=below,filter_sizes=w_shape,out_backprop=tf.nn.relu(out_backprop),strides=strides,padding='SAME')
 
     input_shape=[batch_size]+(below.shape.as_list())[1:]
 
@@ -113,11 +116,13 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0):
     back_propped=non_lin_deriv_times_backprop(back_propped,current,scale)
 
     #gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
-    gradfcW=tf.matmul(tf.transpose(belowf),back_propped)
     if (sym):
+        gradfcW = tf.matmul(tf.transpose(belowf), back_propped)
         gradfcR=gradfcW
     else:
-        gradfcR=tf.matmul(tf.nn.relu(tf.transpose(belowf)),back_propped)
+        tbelow=tf.transpose(below)
+        gradfcW = tf.matmul(tf.nn.relu(tbelow), back_propped)
+        gradfcR=tf.matmul(tbelow,tf.nn.relu(back_propped))
 
     # Propagated error to conv layer.
     filter=W
@@ -176,15 +181,19 @@ def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_
     # Get the active indices from below and above for the out-product gradient.
     below_list=tf.gather(belowf,W_inds[:,1],axis=1)
     back_propped_list=tf.gather(back_proppedf,W_inds[:,0],axis=1)
-    gradfcW=tf.reduce_sum(tf.multiply(below_list,back_propped_list),axis=0)
     # Same for the gradient of R.
     if (R_inds is not None):
         below_list = tf.gather(belowf, R_inds[:, 1], axis=1)
-        if (not sym):
-            below_list=tf.nn.relu(below_list)
-        back_propped_list = tf.gather(back_proppedf, R_inds[:, 0], axis=1)
-        gradfcR = tf.reduce_sum(tf.multiply(below_list, back_propped_list), axis=0)
+        if (sym):
+            gradfcW = tf.reduce_sum(tf.multiply(below_list, back_propped_list), axis=0)
+            back_propped_list = tf.gather(back_proppedf, R_inds[:, 0], axis=1)
+            gradfcR = tf.reduce_sum(tf.multiply(below_list, back_propped_list), axis=0)
+        else:
+            gradfcW = tf.reduce_sum(tf.multiply(tf.nn.relu(below_list), back_propped_list), axis=0)
+            back_propped_list = tf.gather(back_proppedf, R_inds[:, 0], axis=1)
+            gradfcR = tf.reduce_sum(tf.multiply(below_list, tf.nn.relu(back_propped_list)), axis=0)
     else:
+        gradfcW = tf.reduce_sum(tf.multiply(below_list, back_propped_list), axis=0)
         gradfcR=gradfcW
     # Finds,F_vals, F_dims stores the transpose of either W or R depending if we're doing non-symmetric
     filter=tf.SparseTensor(indices=F_inds,values=F_vals,dense_shape=F_dims)
