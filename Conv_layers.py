@@ -9,7 +9,7 @@ import sys
 # But for general non-linearities this is WRONG! current should be the field not the output.
 low=-1.
 high=1.
-sym=True
+sym=False
 
 def non_lin(inp,scale):
     if (scale>0):
@@ -68,7 +68,7 @@ def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale
                                                  strides=strides, padding='SAME')
         gradconvR=gradconvW
     else:
-        gradconvW = tf.nn.conv2d_backprop_filter(input=tf.nn.relu(below), filter_sizes=w_shape, out_backprop=out_backprop,
+        gradconvW = tf.nn.conv2d_backprop_filter(input=below, filter_sizes=w_shape, out_backprop=out_backprop,
                                                  strides=strides, padding='SAME')
         gradconvR=tf.nn.conv2d_backprop_filter(input=below,filter_sizes=w_shape,out_backprop=tf.nn.relu(out_backprop),strides=strides,padding='SAME')
 
@@ -121,7 +121,7 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0):
         gradfcR=gradfcW
     else:
         tbelow=tf.transpose(belowf)
-        gradfcW = tf.matmul(tf.nn.relu(tbelow), back_propped)
+        gradfcW = tf.matmul(tbelow, back_propped)
         gradfcR=tf.matmul(tbelow,tf.nn.relu(back_propped))
 
     # Propagated error to conv layer.
@@ -189,7 +189,7 @@ def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_
             back_propped_list = tf.gather(back_proppedf, R_inds[:, 0], axis=1)
             gradfcR = tf.reduce_sum(tf.multiply(below_list, back_propped_list), axis=0)
         else:
-            gradfcW = tf.reduce_sum(tf.multiply(tf.nn.relu(below_list), back_propped_list), axis=0)
+            gradfcW = tf.reduce_sum(tf.multiply(below_list, back_propped_list), axis=0)
             back_propped_list = tf.gather(back_proppedf, R_inds[:, 0], axis=1)
             gradfcR = tf.reduce_sum(tf.multiply(below_list, tf.nn.relu(back_propped_list)), axis=0)
     else:
