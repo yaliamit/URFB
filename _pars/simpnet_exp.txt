@@ -16,7 +16,7 @@ b_nonlin_scale:0.
 sparse:conv1R,conv1aR,
 #re_randomize:conv1R,conv1aR,newdensp,newdensf
 name:input1
-name:conv1R;num_filters:16;filter_size:(3,3);non_linearity:tanh;parent:input1
+name:conv1R;num_filters:32;filter_size:(3,3);non_linearity:tanh;parent:input1
 #name:drop0;drop:0.5;parent:conv1R
 #name:pool1;pool_size:(2, 2);stride:(2, 2);parent:conv1R
 name:conv1aR;num_filters:32;filter_size:(3,3);non_linearity:tanh;parent:conv1R
