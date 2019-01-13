@@ -9,7 +9,7 @@ import sys
 # But for general non-linearities this is WRONG! current should be the field not the output.
 low=-1.
 high=1.
-sym=False
+sym=True
 
 def non_lin(inp,scale):
     if (scale>0):
