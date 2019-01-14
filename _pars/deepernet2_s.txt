@@ -26,7 +26,7 @@ name:conv1R;parent:pool0;filter_size:(3,3);num_filters:32;non_linearity:tanh
 name:conv1aR;parent:conv1R;filter_size:(3,3);num_filters:32;non_linearity:tanh
 name:concatsum1;parent:[conv1R,conv1aR]
 name:pool1;parent:concatsum1;pool_size:(2,2);stride:(2,2)
-name:drop1;drop:.5;parent:pool1
+name:drop1;drop:.0;parent:pool1
 name:conv2R;parent:drop1;filter_size:(3,3);num_filters:64;non_linearity:tanh
 name:conv2aR;parent:conv2R;filter_size:(3,3);num_filters:64;non_linearity:tanh
 name:concatsum2;parent:[conv2R,conv2aR]
