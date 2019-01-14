@@ -22,7 +22,7 @@ def non_lin_deriv_times_backprop(out_backprop,current,scale):
     if (scale>0):
         on_zero = K.zeros_like(out_backprop)
         #out_backprop = scale * K.tf.where(tf.logical_or(tf.greater(current, high),tf.less(current,low)), on_zero, out_backprop)
-        out_backprop = scale * K.tf.where(tf.equal(tf.abs(current), 1.), on_zero, out_backprop)
+        out_backprop = scale * K.tf.where(tf.equal(tf.abs(out_backprop), 1.), on_zero, out_backprop)
     return out_backprop
 
 def comp_lim(shape):
