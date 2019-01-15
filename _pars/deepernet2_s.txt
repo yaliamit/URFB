@@ -20,13 +20,12 @@ nonlin_scale:.5
 b_nonlin_scale:0
 sparse_global_prob:(1.,1.)
 name:input1
+name:input1
 name:conv0R;parent:input1;filter_size:(5,5);num_filters:16;non_linearity:tanh
-name:pool0;parent:conv0R;pool_size:(3,3);stride:(3,3)
-#name:conv1R;parent:pool0;filter_size:(3,3);num_filters:32;non_linearity:tanh
-#name:conv1aR;parent:conv1R;filter_size:(3,3);num_filters:32;non_linearity:tanh
-#name:concatsum1;parent:[conv1R,conv1aR]
-#name:pool1;parent:conv1R;pool_size:(2,2);stride:(2,2)
-name:drop1;drop:.5;parent:pool0
+#name:conv0aR;parent:conv0R;filter_size:(3,3);num_filters:16;non_linearity:tanh
+#name:concatsum0;parent:[conv0R,conv0aR]
+name:pool1;parent:conv0R;pool_size:(3,3);stride:(3,3)
+name:drop1;drop:.5;parent:pool1
 name:conv2R;parent:drop1;filter_size:(3,3);num_filters:64;non_linearity:tanh
 name:conv2aR;parent:conv2R;filter_size:(3,3);num_filters:64;non_linearity:tanh
 name:concatsum2;parent:[conv2R,conv2aR]
@@ -35,6 +34,6 @@ name:conv3R;parent:pool2;filter_size:(2,2);num_filters:64;non_linearity:tanh
 name:conv3aR;parent:conv3R;filter_size:(2,2);num_filters:64;non_linearity:tanh
 name:concatsum3;parent:[conv3R,conv3aR]
 name:pool3;parent:concatsum3;pool_size:(2,2);stride:(2,2)
-name:drop3;drop:.5;parent:concatsum3
+name:drop3;drop:.5;parent:pool3
 name:newdensp;parent:drop3;non_linearity:tanh;num_units:500
 name:newdensf;parent:newdensp;num_units:10;final:final
