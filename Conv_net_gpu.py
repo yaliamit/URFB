@@ -317,7 +317,7 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
         T=TS[ts]
         # If len T=3 then there is a field input and the non-linear output, current should be the field
         if (type(T) is list and len(T)==3):
-            current=TS[ts][0]
+            current=TS[ts][1]
         name,T=get_name(T)
 
         if (ts<lts-1):
