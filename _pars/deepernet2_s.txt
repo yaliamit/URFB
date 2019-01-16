@@ -22,7 +22,7 @@ sparse_global_prob:(1.,1.)
 name:input1
 name:conv0R;parent:input1;filter_size:(5,5);num_filters:16;non_linearity:tanh
 name:pool1;parent:conv0R;pool_size:(3,3);stride:(3,3)
-name:drop1;drop:.5;parent:pool1
+name:drop1;drop:.0;parent:pool1
 name:conv2R;parent:drop1;filter_size:(3,3);num_filters:64;non_linearity:tanh
 name:conv2aR;parent:conv2R;filter_size:(3,3);num_filters:64;non_linearity:tanh
 name:concatsum2;parent:[conv2R,conv2aR]

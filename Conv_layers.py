@@ -9,7 +9,7 @@ import sys
 # But for general non-linearities this is WRONG! current should be the field not the output.
 low=-1.
 high=1.
-sym=False
+
 
 def non_lin(inp,scale):
     if (scale>0):
@@ -54,7 +54,7 @@ def conv_layer(input,batch_size,filter_size=[3,3],num_features=[1],prob=[1.,-1.]
     conv_nonlin=non_lin(conv,scale)
     return [conv_nonlin,conv, lim]
 
-def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale=0):
+def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale=0, sym=True):
     w_shape=W.shape
     strides=[1,1,1,1]
     back_prop_shape=[-1]+(current.shape.as_list())[1:]
@@ -108,7 +108,7 @@ def fully_connected_layer(input,batch_size, num_features,prob=[1.,-1.], scale=0,
 
 
 
-def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0):
+def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0, sym=True):
 
     print("SYM",sym)
     belowf=tf.contrib.layers.flatten(below)
@@ -169,7 +169,7 @@ def sparse_fully_connected_layer(input,batch_size, num_units, num_features,prob=
     return [fc_nonlin,fc]
 
 # Gradient for sparse fully connected.
-def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_dims, W_inds, R_inds, scale=0, bscale=0):
+def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_dims, W_inds, R_inds, scale=0, bscale=0, sym=True):
 
     # Flatten whatever is coming from below
     belowf=tf.contrib.layers.flatten(below)
@@ -183,6 +183,7 @@ def grad_sparse_fully_connected(below, back_propped, current, F_inds, F_vals, F_
     back_propped_list=tf.gather(back_proppedf,W_inds[:,0],axis=1)
     # Same for the gradient of R.
     if (R_inds is not None):
+        # Separate filtering out of coordinates for R if there is randomized connectivity.
         below_list = tf.gather(belowf, R_inds[:, 1], axis=1)
         if (sym):
             gradfcW = tf.reduce_sum(tf.multiply(below_list, back_propped_list), axis=0)
