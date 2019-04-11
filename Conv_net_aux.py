@@ -320,11 +320,11 @@ def test_correlations(OPS):
     while i < len(VS):
       if ('sparse' not in VS[i].name):
         print("Layer", i, VS[i].name)
-        R=VS[i].eval().ravel()
-        W=VS[i+1].eval().ravel()
-        #if (len(R.shape)==2):
-        print("SD W",np.std(W),"SD R",np.std(R),"MAX W",np.max(np.abs(W)),"MEAN DIFF",np.mean(np.abs(W-R)))
-        print(np.corrcoef(W,R))
+        W=VS[i].eval().ravel()
+        R=VS[i+1].eval().ravel()
+        if (len(R.shape)>=2):
+            print("SD W",np.std(W),"SD R",np.std(R),"MAX W",np.max(np.abs(W)),"MEAN DIFF",np.mean(np.abs(W-R)))
+            print(np.corrcoef(W,R))
         i=i+2
       else:
           R = VS[i+4].eval()
