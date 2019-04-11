@@ -1,5 +1,5 @@
 seed:45239
-num_epochs:10
+num_epochs:100
 data_set:mnist
 batch_size:500
 step_size:.1
