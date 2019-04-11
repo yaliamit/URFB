@@ -164,10 +164,15 @@ def load_dataset(pad=0,nval=10000):
 # This script supports three types of models. For each one, we define a
 # function that takes a Theano variable representing the input and returns
 # the output layer of a neural network model built in Lasagne.
-def get_mnist():
-    tr, trl, val, vall, test, testl = load_dataset()
+def get_mnist(PARS):
+    if ('nval' in PARS):
+        nval=PARS['nval']
+    else:
+        nval=10000
+    tr, trl, val, vall, test, testl = load_dataset(nval=nval)
     trl=one_hot(trl)
-    vall=one_hot(vall)
+    if (nval>0):
+        vall=one_hot(vall)
     testl=one_hot(testl)
     return (tr,trl), (val,vall), (test,testl)
 
@@ -202,7 +207,7 @@ def get_data(PARS):
     if ('cifar' in PARS['data_set']):
         train, val, test=get_cifar(PARS)
     elif (PARS['data_set']=="mnist"):
-        train, val, test= get_mnist()
+        train, val, test= get_mnist(PARS)
     num_train = np.minimum(PARS['num_train'], train[0].shape[0])
     train = (train[0][0:num_train], train[1][0:num_train])
     dim = train[0].shape[1]
