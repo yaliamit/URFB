@@ -250,7 +250,7 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                elif('blob' in PARS):
                    fc2=TS[-1][0]
                    ya=y_[:,:,:,2]
-                   loss = tf.reduce_mean(tf.reduce_sum(-y_[:,:,:,2] * fc2[:,:,:,2] + tf.math.softplus(fc2[:,:,:,2]), axis=[1, 2]))
+                   loss = tf.reduce_mean(tf.reduce_sum(-ya * fc2[:,:,:,2] + tf.math.softplus(fc2[:,:,:,2]), axis=[1, 2]))
                    loss = loss + tf.reduce_mean(
                        tf.reduce_sum((y_[:, :, :, 0] - fc2[:, :, :, 0]) * (y_[:, :, :, 0] - fc2[:, :, :, 0]) * ya
                                      + (y_[:, :, :, 1] - fc2[:, :, :, 1]) * (y_[:, :, :, 1] - fc2[:, :, :, 1]) * ya,
@@ -275,8 +275,9 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                 with tf.variable_scope('helpers'):
                     accuracy=[]
                     hy=tf.greater(TS[-1][0][:,:,:,2],0)
+                    ya = y_[:, :, :, 2]
                     accuracy.append(tf.reduce_sum(tf.abs(hy - y_[:, :, :, 2]) *
-                                                  y_[:,:,:2][:, :, :, 2]) / tf.reduce_sum(y_[:, :, :, 2]))
+                                                  y_[:, :, :, 2]) / tf.reduce_sum(y_[:, :, :, 2]))
                     accuracy.append(tf.reduce_sum((tf.abs(TS[-1][0][:, :, :, 0] - y_[:, :, :, 0]) +
                                  np.abs(TS[-1][0][:, :, :, 1] - y_[:, :, :, 1])) * y_[:, :, :, 2]) /
                                     tf.reduce_sum(y_[:, :, :, 2]))

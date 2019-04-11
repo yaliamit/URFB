@@ -6,6 +6,7 @@ import tensorflow as tf
 from Conv_data import get_data, rotate_dataset_rand
 import numpy as np
 import time
+import matplotlib
 
 def process_param_line(line):
     # Split parameter line on :
@@ -195,8 +196,11 @@ def print_results(type,epoch,lo,ac):
     print(type+" loss:\t\t\t{:.6f}".format(lo))
     print(type+" acc:\t\t\t{:.6f}".format(ac))
 
-def plot_OUTPUT(name='OUTPUT',code='',first=None,last=None):
+def plot_OUTPUT(name='OUTPUT',type='',incol=None,first=None,last=None):
 
+    col='blue'
+    if (incol is not None):
+        col=incol
     import numpy as np
     import pylab as py
     py.ion()
@@ -205,8 +209,8 @@ def plot_OUTPUT(name='OUTPUT',code='',first=None,last=None):
     bp=[]
     bt=np.fromstring(commands.check_output('grep Train ' + name + '.txt | grep acc | cut -d":" -f2',shell=True),sep='\n\t\t\t')
     loss=np.fromstring(commands.check_output('grep Train ' + name + '.txt | grep loss | cut -d":" -f2',shell=True),sep='\n\t\t\t')
-    fig=py.figure(2)
-    py.plot(loss)
+    #fig=py.figure(2)
+    #py.plot(loss)
     py.figure(1)
     bv=np.fromstring(commands.check_output('grep Val ' + name + '.txt | grep acc | cut -d":" -f2',shell=True),sep='\n\t\t\t')
 
@@ -238,13 +242,15 @@ def plot_OUTPUT(name='OUTPUT',code='',first=None,last=None):
         if (havetrain>0):
             py.plot(len(bt)-2, atest, 'go', markersize=4)
             #py.plot(len(bt)-2, atrain, 'bo', markersize=4)
-    py.plot(bt,label='train '+code)
-    py.plot(bv,label='val '+code)
+    ii=np.arange(0,1000,10)
+    py.plot(ii,1-bt[ii],label='train '+type, color=col)
+    py.plot(ii,1-bv[ii],label='val '+type,linestyle=':',color=col)
+    py.axis([0,1000,0,1])
     if (bp!=[]):
         py.plot(bp,label='Pos')
-    py.legend(loc=4)
-
-    py.show()
+    #py.legend(fontsize=8, bbox_to_anchor=(0.25, 1.))
+    #py.show()
+    #print('hello')
 
 def setup_net(PARS,OPS,  WR=None, SP=None, non_trainable=None):
     # Create the network architecture with the above placeholdes as the inputs.
