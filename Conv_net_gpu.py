@@ -381,14 +381,14 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             if ('nonlin' in name):
                 scale = PARS['nonlin_scale']
                 bscale = PARS['b_nonlin_scale']
-            gradfcW, gradfcR, gradx = grad_fully_connected(below=pre,back_propped=gradx,current=current, W=VS[vs],R=VS[vs+1], scale=scale, bscale=bscale, sym=sym)
+            gradfcW, gradfcR = grad_fully_connected(below=pre,back_propped=gradx,current=current, W=VS[vs],R=VS[vs+1], scale=scale, bscale=bscale, sym=sym)
             assign_op_fcW, newW = update_only_non_zero(VS[vs],gradfcW,PARS['step_size'],TS[ts][2])
             OPLIST.append(assign_op_fcW)
             # If an R variable exists and is a 2-dim matrix i.e. is active
             if (len(VS[vs+1].shape.as_list())==2):
                 assign_op_fcR, newR = update_only_non_zero(VS[vs+1],gradfcR,PARS['Rstep_size'],TS[ts][2])
                 OPLIST.append(assign_op_fcR)
-            #gradx=fully_connected_backprop(newW, newR, gradx, bscale)
+            gradx=fully_connected_backprop(VS[vs], VS[vs+1], gradx, bscale)
             if (PARS['debug']):
                 all_grad.append(gradfcW)
                 all_grad.append(gradfcR)

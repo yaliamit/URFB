@@ -140,9 +140,9 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0, s
         gradfcR=tf.matmul(tf.nn.relu(tbelow),back_propped)
 
     # Propagated error to conv layer.
-    gradfcx=fully_connected_backprop(W,R,back_propped,bscale)
+    #gradfcx=fully_connected_backprop(W,R,back_propped,bscale)
 
-    return gradfcW, gradfcR, gradfcx
+    return gradfcW, gradfcR#, gradfcx
 
 def sparse_fully_connected_layer(input,batch_size, num_units, num_features,prob=[1.,-1.], scale=0,Win=None,Rin=None, Fin=None):
     # Make sure input is flattened.
