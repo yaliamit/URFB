@@ -291,13 +291,12 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
 
 
 def update_only_non_zero(V,gra, step,lim=None):
-    oldV=V
     up=V-step*gra
     up=K.tf.where(tf.equal(V,tf.constant(0.)),V,up)
     # if (lim is not None):
     #    up=tf.clip_by_value(up,-2*lim,2*lim)
     assign_op = tf.assign(V,up)
-    return assign_op, oldV
+    return assign_op, up
 
 def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
     # Get gradient of loss with respect to final output layer using tf gradient
