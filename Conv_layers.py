@@ -54,6 +54,19 @@ def conv_layer(input,batch_size,filter_size=[3,3],num_features=[1],prob=[1.,-1.]
     conv_nonlin=non_lin(conv,scale)
     return [conv_nonlin,conv, lim]
 
+def conv_layer_backprop(batch_size,W,R,out_backprop,below,bscale):
+    strides = [1, 1, 1, 1]
+    input_shape = [batch_size] + (below.shape.as_list())[1:]
+
+    filter = W
+    if (len(R.shape.as_list()) == 4):
+        filter = R
+    print('input_sizes', input_shape, 'filter', filter.shape.as_list(), 'out_backprop', out_backprop.shape.as_list())
+    gradconvx = tf.nn.conv2d_backprop_input(input_sizes=input_shape, filter=filter, out_backprop=out_backprop,
+                                            strides=strides, padding='SAME')
+    if (bscale > 0):
+        gradconvx = tf.clip_by_value(bscale * gradconvx, -1., 1.)
+
 def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale=0, sym=True):
     w_shape=W.shape
     strides=[1,1,1,1]
@@ -72,16 +85,11 @@ def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale
                                                  strides=strides, padding='SAME')
         gradconvR=tf.nn.conv2d_backprop_filter(input=tf.nn.relu(below),filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
 
-    input_shape=[batch_size]+(below.shape.as_list())[1:]
+    gradconvx=conv_layer_backprop(batch_size,W,R,out_backprop,below,bscale)
 
-    filter=W
-    if (len(R.shape.as_list())==4):
-        filter=R
-    print('input_sizes',input_shape,'filter',filter.shape.as_list(),'out_backprop',out_backprop.shape.as_list())
-    gradconvx=tf.nn.conv2d_backprop_input(input_sizes=input_shape,filter=filter,out_backprop=out_backprop,strides=strides,padding='SAME')
-    if (bscale>0):
-        gradconvx = tf.clip_by_value(bscale * gradconvx, -1., 1.)
     return gradconvW, gradconvR, gradconvx
+
+
 
 def fully_connected_layer(input,batch_size, num_features,prob=[1.,-1.], scale=0,Win=None,Rin=None):
     # Make sure input is flattened.
@@ -106,7 +114,14 @@ def fully_connected_layer(input,batch_size, num_features,prob=[1.,-1.], scale=0,
     return [fc_nonlin,fc,lim]
 
 
-
+def fully_connected_backprop(W,R,back_propped,bscale):
+    filter = W
+    if (len(R.shape.as_list()) == 2):
+        filter = R
+    gradfcx = tf.matmul(back_propped, tf.transpose(filter))
+    if (bscale > 0):
+        gradfcx = tf.clip_by_value(bscale * gradfcx, -1., 1.)
+    return gradfcx
 
 def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0, sym=True):
 
@@ -125,13 +140,9 @@ def grad_fully_connected(below, back_propped, current, W, R, scale=0,bscale=0, s
         gradfcR=tf.matmul(tf.nn.relu(tbelow),back_propped)
 
     # Propagated error to conv layer.
-    filter=W
-    if (len(R.shape.as_list())==2):
-        filter=R
-    gradfcx=tf.matmul(back_propped,tf.transpose(filter))
-    if (bscale>0):
-        gradfcx = tf.clip_by_value(bscale * gradfcx, -1., 1.)
-    return gradfcW, gradfcR, gradfcx
+    #gradfcx=fully_connected_backprop(W,R,back_propped,bscale)
+
+    return gradfcW, gradfcR#, gradfcx
 
 def sparse_fully_connected_layer(input,batch_size, num_units, num_features,prob=[1.,-1.], scale=0,Win=None,Rin=None, Fin=None):
     # Make sure input is flattened.

@@ -233,23 +233,28 @@ def plot_OUTPUT(name='OUTPUT',type='',incol=None,first=None,last=None):
     print('Final',atest) #,atrain)
     if (first is not None and last is not None):
         bt=bt[first:last]
-        bv=bv[first:last]
+        if (len(bv)>0):
+            bv=bv[first:last]
+            print(bv[-1])
         if (bp!=[]):
             bp=bp[first:last]
-        print(bv[-1],bt[-1])
+        print(bt[-1])
     else:
-        print(len(bt),bv[-1],bt[-1])
+        if (len(bv)):
+            print(bv[-1])
+        print(len(bt),bt[-1])
         if (havetrain>0):
             py.plot(len(bt)-2, atest, 'go', markersize=4)
             #py.plot(len(bt)-2, atrain, 'bo', markersize=4)
-    ii=np.arange(0,1000,10)
+    ii=np.arange(0,len(bt),1)
     py.plot(ii,1-bt[ii],label='train '+type, color=col)
-    py.plot(ii,1-bv[ii],label='val '+type,linestyle=':',color=col)
-    py.axis([0,1000,0,1])
+    if (len(bv)):
+        py.plot(ii,1-bv[ii],label='val '+type,linestyle=':',color=col)
+    py.axis([0,len(ii),0,1])
     if (bp!=[]):
         py.plot(bp,label='Pos')
     #py.legend(fontsize=8, bbox_to_anchor=(0.25, 1.))
-    #py.show()
+    py.show()
     #print('hello')
 
 def setup_net(PARS,OPS,  WR=None, SP=None, non_trainable=None):
@@ -296,8 +301,6 @@ def run_epoch(train,i,OPS,PARS,sess,type='Train'):
     for j in np.arange(0, len(y), batch_size):
         batch = (tr[j:j + batch_size], y[j:j + batch_size])
         if ('Train' in type):
-            #grad = sess.run([OPS['TS'][0][0],]+OPS['dW_OPs'], feed_dict={OPS['x']: batch[0], OPS['y_']: batch[1], OPS['Train']: True})
-            #grad = sess.run([OPS['TS'][6][0],OPS['TS'][2][0]]+OPS['dW_OPs'], feed_dict={OPS['x']: batch[0], OPS['y_']: batch[1], OPS['Train']: True})
             grad = sess.run(OPS['dW_OPs'], feed_dict={OPS['x']: batch[0], OPS['y_']: batch[1], OPS['Train']: True})
             acc += grad[-2]
             lo += grad[-1]

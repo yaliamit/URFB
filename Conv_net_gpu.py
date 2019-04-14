@@ -3,7 +3,7 @@ import numpy as np
 from keras import backend as K
 from Conv_layers import comp_lim, conv_layer, grad_conv_layer, fully_connected_layer, grad_fully_connected, grad_pool, grad_pool_disjoint_fast
 from Conv_layers import sparse_fully_connected_layer, grad_sparse_fully_connected, MaxPoolingandMask, MaxPoolingandMask_disjoint_fast, real_drop
-
+from Conv_layers import fully_connected_backprop
 def find_ts(name,TS):
     for ts in TS:
         if (type(ts) is list):
@@ -296,7 +296,7 @@ def update_only_non_zero(V,gra, step,lim=None):
     # if (lim is not None):
     #    up=tf.clip_by_value(up,-2*lim,2*lim)
     assign_op = tf.assign(V,up)
-    return assign_op
+    return assign_op, up
 
 def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
     # Get gradient of loss with respect to final output layer using tf gradient
@@ -381,13 +381,14 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             if ('nonlin' in name):
                 scale = PARS['nonlin_scale']
                 bscale = PARS['b_nonlin_scale']
-            gradfcW, gradfcR, gradx = grad_fully_connected(below=pre,back_propped=gradx,current=current, W=VS[vs],R=VS[vs+1], scale=scale, bscale=bscale, sym=sym)
-            assign_op_fcW = update_only_non_zero(VS[vs],gradfcW,PARS['step_size'],TS[ts][2])
+            gradfcW, gradfcR = grad_fully_connected(below=pre,back_propped=gradx,current=current, W=VS[vs],R=VS[vs+1], scale=scale, bscale=bscale, sym=sym)
+            assign_op_fcW, newW = update_only_non_zero(VS[vs],gradfcW,PARS['step_size'],TS[ts][2])
             OPLIST.append(assign_op_fcW)
             # If an R variable exists and is a 2-dim matrix i.e. is active
             if (len(VS[vs+1].shape.as_list())==2):
-                assign_op_fcR = update_only_non_zero(VS[vs+1],gradfcR,PARS['Rstep_size'],TS[ts][2])
+                assign_op_fcR, newR = update_only_non_zero(VS[vs+1],gradfcR,PARS['Rstep_size'],TS[ts][2])
                 OPLIST.append(assign_op_fcR)
+            gradx=fully_connected_backprop(newW, newR, gradx, bscale)
             if (PARS['debug']):
                 all_grad.append(gradfcW)
                 all_grad.append(gradfcR)
