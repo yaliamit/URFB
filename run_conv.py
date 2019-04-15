@@ -43,6 +43,7 @@ with tf.device(gpu_device):
         OPS['x'] = tf.placeholder(tf.float32, shape=[None, dim, dim, PARS['nchannels']], name="x")
         OPS['y_'] = tf.placeholder(tf.float32, shape=[None, PARS['n_classes']], name="y")
         OPS['Train'] = tf.placeholder(tf.bool, name="Train")
+        OPS['Class'] = tf.placeholder(tf.int32,name="Class")
         Conv_net_aux.setup_net(PARS,OPS)
 
         # Initialize variables
@@ -51,11 +52,14 @@ with tf.device(gpu_device):
 
         # Initial test accuracy
         test_correlations(OPS)
-        run_epoch(test,-1,OPS,PARS,sess,type='Test')
+        run_epoch(test,-1,OPS,PARS,sess,type='Test',cl=-1)
         # Run training epochs
         for i in range(PARS['num_epochs']):  # number of epochs
-            run_epoch(train,i,OPS,PARS,sess)
-
+            if ('by_class' in PARS):
+                for cl in range(PARS['n_classes']):
+                    run_epoch(train,i,OPS,PARS,sess,cl=cl)
+            else:
+                run_epoch(train, i, OPS, PARS, sess, cl=-1)
             run_epoch(val,i,OPS,PARS,sess,type='Val')
             sys.stdout.flush()
 

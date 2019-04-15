@@ -102,7 +102,42 @@ def get_name(ts):
     return (name,T)
 
 
-def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
+def hinge_loss_by_class(ts,y_,PARS,cl):
+
+    mu=PARS['off_class_fac']/PARS['n_classes']
+    ycl = tf.equal(y_[:,cl],1)
+    #ycl=tf.cast(y, dtype=tf.bool)
+    tcl=ts[:,cl]
+    #tcl=tf.gather(ts,cl,axis=0)
+    tcly=tf.boolean_mask(tcl,ycl)
+    tcln=tf.boolean_mask(tcl,tf.logical_not(ycl))
+    cor= tf.nn.relu(1-tcly) + mu*tf.nn.relu(1+tcln)
+    loss=tf.reduce_mean(cor,name="hinge_cl")
+
+    return(loss)
+
+def hinge_loss(ts, y_, PARS):
+    # Make y_ boollean
+    yb = tf.cast(y_, dtype=tf.bool)
+    # Get weight on correct class
+    cor = tf.boolean_mask(ts, yb)
+    # Hinge the weight on correct mask
+    cor = tf.nn.relu(1. - cor)
+    # Get weights on incorrect classes
+    res = tf.boolean_mask(ts, tf.logical_not(yb))
+    shp = ts.shape.as_list()
+    shp[1] = shp[1] - 1
+    # Reshape as B x (C-1)
+    res = tf.reshape(res, shape=shp)
+    # Hinge these weights the other way.
+    res = tf.reduce_sum(tf.nn.relu(1. + res), axis=1)
+    # Add the two with factor.
+    loss = tf.reduce_mean(cor + PARS['off_class_fac'] * res / (PARS['n_classes'] - 1), name="hinge")
+    return(loss)
+
+
+
+def recreate_network(PARS,x,y_,Train,Class,WR=None,SP=None):
 
 
             TS=[]
@@ -231,30 +266,8 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
             with tf.variable_scope('loss'):
                # Hinge loss
                if ('hinge' in PARS and PARS['hinge']):
-                 # Make y_ boollean
-                 yb=tf.cast(y_,dtype=tf.bool)
-                 # Get weight on correct class
-                 cor=tf.boolean_mask(TS[-1][0],yb)
-                 # Hinge the weight on correct mask
-                 cor = tf.nn.relu(1.-cor)
-                 # Get weights on incorrect classes
-                 res=tf.boolean_mask(TS[-1][0],tf.logical_not(yb))
-                 shp=TS[-1][0].shape.as_list()
-                 shp[1]=shp[1]-1
-                 # Reshape as B x (C-1)
-                 res=tf.reshape(res,shape=shp)
-                 # Hinge these weights the other way.
-                 res=tf.reduce_sum(tf.nn.relu(1.+res),axis=1)
-                 # Add the two with factor.
-                 loss=tf.reduce_mean(cor+PARS['off_class_fac']*res/(PARS['n_classes']-1),name="hinge")
-               elif('blob' in PARS):
-                   fc2=TS[-1][0]
-                   ya=y_[:,:,:,2]
-                   loss = tf.reduce_mean(tf.reduce_sum(-ya * fc2[:,:,:,2] + tf.math.softplus(fc2[:,:,:,2]), axis=[1, 2]))
-                   loss = loss + tf.reduce_mean(
-                       tf.reduce_sum((y_[:, :, :, 0] - fc2[:, :, :, 0]) * (y_[:, :, :, 0] - fc2[:, :, :, 0]) * ya
-                                     + (y_[:, :, :, 1] - fc2[:, :, :, 1]) * (y_[:, :, :, 1] - fc2[:, :, :, 1]) * ya,
-                                     axis=[1, 2]))
+                   loss = tf.cond(Class<0, lambda: hinge_loss(TS[-1][0],y_,PARS), lambda: hinge_loss_by_class(TS[-1][0],y_,PARS,Class))
+
                elif('L2' in PARS):
                    # L2 loss.
                    diff=y_-TS[-1][0]
@@ -271,16 +284,7 @@ def recreate_network(PARS,x,y_,Train,WR=None,SP=None):
                     correct_prediction = tf.equal(tf.argmax(TS[-1][0], 1), tf.argmax(y_, 1))
                     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32),name="ACC")
             # Accuracy computation for parametric object detection
-            else:
-                with tf.variable_scope('helpers'):
-                    accuracy=[]
-                    hy=tf.greater(TS[-1][0][:,:,:,2],0)
-                    ya = y_[:, :, :, 2]
-                    accuracy.append(tf.reduce_sum(tf.abs(hy - y_[:, :, :, 2]) *
-                                                  y_[:, :, :, 2]) / tf.reduce_sum(y_[:, :, :, 2]))
-                    accuracy.append(tf.reduce_sum((tf.abs(TS[-1][0][:, :, :, 0] - y_[:, :, :, 0]) +
-                                 np.abs(TS[-1][0][:, :, :, 1] - y_[:, :, :, 1])) * y_[:, :, :, 2]) /
-                                    tf.reduce_sum(y_[:, :, :, 2]))
+
             print('joint_parent',joint_parent)
             # joint_parent contains information on layers that are parents to two other layers which affects the gradient propagation.
             PARS['joint_parent'] = joint_parent

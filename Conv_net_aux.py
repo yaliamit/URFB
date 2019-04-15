@@ -260,7 +260,7 @@ def plot_OUTPUT(name='OUTPUT',type='',incol=None,first=None,last=None):
 def setup_net(PARS,OPS,  WR=None, SP=None, non_trainable=None):
     # Create the network architecture with the above placeholdes as the inputs.
     # TS is a list of tensors or tensors + a list of associated parameters (pool size etc.)
-    loss, accuracy, TS = Conv_net_gpu.recreate_network(PARS, OPS['x'], OPS['y_'], OPS['Train'],WR=WR,SP=SP)
+    loss, accuracy, TS = Conv_net_gpu.recreate_network(PARS, OPS['x'], OPS['y_'], OPS['Train'],OPS['Class'],WR=WR,SP=SP)
     VS = tf.trainable_variables()
     VS.reverse()
 
@@ -275,7 +275,7 @@ def setup_net(PARS,OPS,  WR=None, SP=None, non_trainable=None):
     OPS['dW_OPs']=dW_OPs
     OPS['lall']=lall
 
-def run_epoch(train,i,OPS,PARS,sess,type='Train'):
+def run_epoch(train,i,OPS,PARS,sess,type='Train',cl=-1):
     t1 = time.time()
 
     # Randomly shuffle the training data
@@ -301,11 +301,11 @@ def run_epoch(train,i,OPS,PARS,sess,type='Train'):
     for j in np.arange(0, len(y), batch_size):
         batch = (tr[j:j + batch_size], y[j:j + batch_size])
         if ('Train' in type):
-            grad = sess.run(OPS['dW_OPs'], feed_dict={OPS['x']: batch[0], OPS['y_']: batch[1], OPS['Train']: True})
+            grad = sess.run(OPS['dW_OPs'], feed_dict={OPS['x']: batch[0], OPS['y_']: batch[1], OPS['Train']: True, OPS['Class']: cl})
             acc += grad[-2]
             lo += grad[-1]
         else:
-            act, lot = sess.run([OPS['accuracy'], OPS['loss']], feed_dict={OPS['x']: batch[0], OPS['y_']: batch[1], OPS['Train']: False})
+            act, lot = sess.run([OPS['accuracy'], OPS['loss']], feed_dict={OPS['x']: batch[0], OPS['y_']: batch[1], OPS['Train']: False, OPS['Class']:-1})
             acc += act
             lo += lot
 

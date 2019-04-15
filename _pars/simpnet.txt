@@ -6,7 +6,7 @@ step_size:.07
 debug:False
 num_train:50000
 off_class_fac:1.
-hinge:False
+hinge:True
 force_global_prob:(1.,1.)
 nonlin_scale:.5
 b_nonlin_scale:.5

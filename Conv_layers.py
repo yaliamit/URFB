@@ -90,7 +90,6 @@ def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale
     return gradconvW, gradconvR, gradconvx
 
 
-
 def fully_connected_layer(input,batch_size, num_features,prob=[1.,-1.], scale=0,Win=None,Rin=None):
     # Make sure input is flattened.
     flat_dim=np.int32(np.array(input.get_shape().as_list())[1:].prod())
