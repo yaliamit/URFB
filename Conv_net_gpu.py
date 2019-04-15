@@ -111,8 +111,9 @@ def hinge_loss_by_class(ts,y_,PARS,cl):
     #tcl=tf.gather(ts,cl,axis=0)
     tcly=tf.boolean_mask(tcl,ycl)
     tcln=tf.boolean_mask(tcl,tf.logical_not(ycl))
-    cor= tf.nn.relu(1-tcly) + mu*tf.nn.relu(1+tcln)
-    loss=tf.reduce_mean(cor,name="hinge_cl")
+    loss= tf.reduce_sum(tf.nn.relu(1-tcly)) + mu*tf.reduce_sum(tf.nn.relu(1+tcln))
+    loss=loss/(ts.shape.as_list()[0])
+    loss=tf.identity(loss,name="hinge_cl")
 
     return(loss)
 

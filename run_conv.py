@@ -57,6 +57,7 @@ with tf.device(gpu_device):
         for i in range(PARS['num_epochs']):  # number of epochs
             if ('by_class' in PARS):
                 for cl in range(PARS['n_classes']):
+                    print('cl',cl)
                     run_epoch(train,i,OPS,PARS,sess,cl=cl)
             else:
                 run_epoch(train, i, OPS, PARS, sess, cl=-1)
