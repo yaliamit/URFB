@@ -136,7 +136,15 @@ def hinge_loss(ts, y_, PARS):
     loss = tf.reduce_mean(cor + PARS['off_class_fac'] * res / (PARS['n_classes'] - 1), name="hinge")
     return(loss)
 
+def reg_accuracy(ts,y_):
+        correct_prediction = tf.equal(tf.argmax(ts, 1), tf.argmax(y_, 1))
+        accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32),name="ACC")
+        return(accuracy)
 
+def ova_accuracy(ts,y_,cl):
+    correct_prediction = tf.equal(tf.argmax(ts, 1), tf.argmax(y_, 1))
+    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="ACC")
+    return (accuracy)
 
 def recreate_network(PARS,x,y_,Train,Class,WR=None,SP=None):
 
@@ -282,8 +290,8 @@ def recreate_network(PARS,x,y_,Train,Class,WR=None,SP=None):
             # Accuracy computation for classification
             if ('hinge' in PARS):
                 with tf.variable_scope('helpers'):
-                    correct_prediction = tf.equal(tf.argmax(TS[-1][0], 1), tf.argmax(y_, 1))
-                    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32),name="ACC")
+                    accuracy=tf.cond(Class<0, lambda: reg_accuracy(TS[-1][0],y_), lambda: ova_accuracy(TS[-1][0],y_,Class))
+
             # Accuracy computation for parametric object detection
 
             print('joint_parent',joint_parent)
