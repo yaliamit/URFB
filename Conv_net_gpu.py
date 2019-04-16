@@ -106,9 +106,7 @@ def hinge_loss_by_class(ts,y_,PARS,cl):
 
     mu=PARS['off_class_fac']/PARS['n_classes']
     ycl = tf.equal(y_[:,cl],1)
-    #ycl=tf.cast(y, dtype=tf.bool)
     tcl=ts[:,cl]
-    #tcl=tf.gather(ts,cl,axis=0)
     tcly=tf.boolean_mask(tcl,ycl)
     tcln=tf.boolean_mask(tcl,tf.logical_not(ycl))
     loss= tf.reduce_sum(tf.nn.relu(1-tcly)) + mu*tf.reduce_sum(tf.nn.relu(1+tcln))
@@ -142,8 +140,12 @@ def reg_accuracy(ts,y_):
         return(accuracy)
 
 def ova_accuracy(ts,y_,cl):
-    correct_prediction = tf.equal(tf.argmax(ts, 1), tf.argmax(y_, 1))
-    accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="ACC")
+    ycl = tf.equal(y_[:, cl], 1)
+    tcl = ts[:, cl]
+    tcly = tf.boolean_mask(tcl, ycl)
+    tcln = tf.boolean_mask(tcl, tf.logical_not(ycl))
+    corr = tf.reduce_sum(tf.cast(tf.greater_equal(tcly, 0),tf.float32))+tf.reduce_sum(tf.cast(tf.less_equal(tcln,0),tf.float32))
+    accuracy = tf.identity(corr/(ts.shape.as_list()[0]), name="ACC")
     return (accuracy)
 
 def recreate_network(PARS,x,y_,Train,Class,WR=None,SP=None):
