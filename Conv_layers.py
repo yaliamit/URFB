@@ -66,6 +66,7 @@ def conv_layer_backprop(batch_size,W,R,out_backprop,below,bscale):
                                             strides=strides, padding='SAME')
     if (bscale > 0):
         gradconvx = tf.clip_by_value(bscale * gradconvx, -1., 1.)
+    return gradconvx
 
 def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale=0, sym=True):
     w_shape=W.shape
@@ -85,9 +86,9 @@ def grad_conv_layer(batch_size,below, back_propped, current, W, R, scale, bscale
                                                  strides=strides, padding='SAME')
         gradconvR=tf.nn.conv2d_backprop_filter(input=tf.nn.relu(below),filter_sizes=w_shape,out_backprop=out_backprop,strides=strides,padding='SAME')
 
-    gradconvx=conv_layer_backprop(batch_size,W,R,out_backprop,below,bscale)
+    #gradconvx=conv_layer_backprop(batch_size,W,R,out_backprop,below,bscale)
 
-    return gradconvW, gradconvR, gradconvx
+    return gradconvW, gradconvR#, gradconvx
 
 
 def fully_connected_layer(input,batch_size, num_features,prob=[1.,-1.], scale=0,Win=None,Rin=None):

@@ -3,7 +3,7 @@ import numpy as np
 from keras import backend as K
 from Conv_layers import comp_lim, conv_layer, grad_conv_layer, fully_connected_layer, grad_fully_connected, grad_pool, grad_pool_disjoint_fast
 from Conv_layers import sparse_fully_connected_layer, grad_sparse_fully_connected, MaxPoolingandMask, MaxPoolingandMask_disjoint_fast, real_drop
-from Conv_layers import fully_connected_backprop
+from Conv_layers import fully_connected_backprop, conv_layer_backprop
 def find_ts(name,TS):
     for ts in TS:
         if (type(ts) is list):
@@ -256,7 +256,7 @@ def recreate_network(PARS,x,y_,Train,Class,WR=None,SP=None):
                     elif ('drop' in l['name']):
                         with tf.variable_scope(l['name']):
                             ffac = 1. / (1. - l['drop'])
-                            # Only drop is place holder Train is True
+                            # Only drop if place holder Train is True
                             drop=tf.cond(Train,lambda: real_drop(parent,l['drop'],PARS['batch_size']),lambda: parent)
                             TS.append([drop,ffac])
                     # Add two equal sized consecutive layers
@@ -361,21 +361,24 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
                 shortname=name[0:name.find('nonlin')]
                 scale=PARS['nonlin_scale']
                 bscale=PARS['b_nonlin_scale']
-            gradconvW, gradconvR, gradx = grad_conv_layer(PARS['batch_size'],below=pre,back_propped=gradx,current=current,W=VS[vs], R=VS[vs+1],scale=scale, bscale=bscale, sym=sym)
+            gradconvW, gradconvR = grad_conv_layer(PARS['batch_size'],below=pre,back_propped=gradx,current=current,W=VS[vs], R=VS[vs+1],scale=scale, bscale=bscale, sym=sym)
             if (non_trainable is None or (non_trainable is not None and shortname not in non_trainable)):
-                assign_op_convW = update_only_non_zero(VS[vs],gradconvW,PARS['step_size'],TS[ts][2])
+                assign_op_convW, newW = update_only_non_zero(VS[vs],gradconvW,PARS['step_size'],TS[ts][2])
                 OPLIST.append(assign_op_convW)
             # If an R variable exists and is a 4-dim array i.e. is active
             if (len(VS[vs+1].shape.as_list())==4):
              if (non_trainable is None or (non_trainable is not None and shortname not in non_trainable)):
-                assign_op_convR=update_only_non_zero(VS[vs+1],gradconvR, PARS['Rstep_size'],TS[ts][2])
+                assign_op_convR, newR=update_only_non_zero(VS[vs+1],gradconvR, PARS['Rstep_size'],TS[ts][2])
                 OPLIST.append(assign_op_convR)
+            gradx = conv_layer_backprop(PARS['batch_size'],newW, newR, gradx, pre, bscale)
+
             #if (PARS['debug']):
             #    all_grad.append(gradx)
             ts+=1
             vs+=2
         elif ('drop' in name):
             Z = tf.equal(T, tf.constant(0.))
+            # Multiply the back-propagated signal by the factor of 1/(1-drop.) stored in TS[ts][1]
             gradx=K.tf.where(Z,T,tf.multiply(tf.reshape(gradx,T.shape),TS[ts][1]))
             #if (PARS['debug']):
             #    all_grad.append(gradx)
@@ -435,6 +438,11 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             grad_hold=gradx
             joint_parent=PARS['joint_parent'][name]
             grad_hold_var[joint_parent]=grad_hold
+
+        # Mess things up - have gradx be a mix of the back-propagated signal and the pre signal.
+        if (ts<lts-1):
+            U = tf.less(tf.random_uniform([PARS['batch_size']] + (pre.shape.as_list())[1:]), 1.)
+            gradx=K.tf.where(U, tf.reshape(gradx,pre.shape.as_list()), pre)
     if (PARS['debug']):
         print('all_grad',len(all_grad))
         for cg in all_grad:
