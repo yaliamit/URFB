@@ -440,7 +440,7 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             grad_hold_var[joint_parent]=grad_hold
 
         # Mess things up - have gradx be a mix of the back-propagated signal and the pre signal.
-        if (ts<lts-1):
+        if (ts<lts-1 and ts>0):
             U = tf.less(tf.random_uniform([PARS['batch_size']] + (pre.shape.as_list())[1:]), .8)
             gradx=K.tf.where(U, tf.reshape(gradx,pre.shape.as_list()), pre)
     if (PARS['debug']):
