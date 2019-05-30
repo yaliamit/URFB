@@ -9,11 +9,11 @@ import sys
 # But for general non-linearities this is WRONG! current should be the field not the output.
 low=-1.
 high=1.
-
+thresh=0.
 
 def non_lin(inp,scale):
     if (scale>0):
-        outp = tf.clip_by_value(scale * inp, low, high)
+        outp = tf.clip_by_value(scale * inp-thresh, low, high)
     else:
         outp=inp
     return outp

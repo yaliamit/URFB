@@ -302,6 +302,9 @@ def run_epoch(train,i,OPS,PARS,sess,type='Train',cl=-1):
         batch = (tr[j:j + batch_size], y[j:j + batch_size])
         if ('Train' in type):
             grad = sess.run(OPS['dW_OPs'], feed_dict={OPS['x']: batch[0], OPS['y_']: batch[1], OPS['Train']: True, OPS['Class']: cl})
+            if (PARS['debug']):
+               for j in np.arange(-6,-2,1):
+                print(j, np.max(grad[j]),np.min(grad[j]),np.shape(grad[j]))
             acc += grad[-2]
             lo += grad[-1]
         else:

@@ -143,10 +143,10 @@ def load_dataset(pad=0,nval=10000):
         return data
 
     # We can now download and read the training and test set images and labels.
-    X_train = load_mnist_images('MNIST/train-images-idx3-ubyte.gz')
-    y_train = load_mnist_labels('MNIST/train-labels-idx1-ubyte.gz')
-    X_test = load_mnist_images('MNIST/t10k-images-idx3-ubyte.gz')
-    y_test = load_mnist_labels('MNIST/t10k-labels-idx1-ubyte.gz')
+    X_train = load_mnist_images('../blobs/MNIST/train-images-idx3-ubyte.gz')
+    y_train = load_mnist_labels('../blobs/MNIST/train-labels-idx1-ubyte.gz')
+    X_test = load_mnist_images('../blobs/MNIST/t10k-images-idx3-ubyte.gz')
+    y_test = load_mnist_labels('../blobs/MNIST/t10k-labels-idx1-ubyte.gz')
 
     # We reserve the last 10000 training examples for validation.
     if (nval>0):
@@ -179,7 +179,7 @@ def get_mnist(PARS):
 def get_cifar(PARS):
 
     data_set=PARS['data_set']
-    filename = '_CIFAR/'+data_set+'_train.hdf5'
+    filename = '/Users/amit/Box Sync/URFB/_CIFAR/'+data_set+'_train.hdf5'
     print(filename)
     f = h5py.File(filename, 'r')
     key = list(f.keys())[0]
@@ -192,7 +192,7 @@ def get_cifar(PARS):
     train_labels=one_hot(np.int32(tr_lb[0:45000]),PARS)
     val_data=np.float32(tr[45000:])/255.
     val_labels=one_hot(np.int32(tr_lb[45000:]),PARS)
-    filename = '_CIFAR/'+data_set+'_test.hdf5'
+    filename = '/Users/amit/Box Sync/URFB/_CIFAR/'+data_set+'_test.hdf5'
     f = h5py.File(filename, 'r')
     key = list(f.keys())[0]
     # Get the data

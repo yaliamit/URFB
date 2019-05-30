@@ -1,12 +1,12 @@
 seed:45239
-num_epochs:0
+num_epochs:100
 num_epochs_sparse:1000
-data_set:cifar10
+data_set:mnist
 batch_size:500
 sparse_batch_size:50
-step_size:.1
+step_size:.07
 sparse_step_size:.1
-debug:False
+debug:True
 num_train:50000
 off_class_fac:1.
 hinge:1.

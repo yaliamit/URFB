@@ -372,8 +372,8 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
                 OPLIST.append(assign_op_convR)
             gradx = conv_layer_backprop(PARS['batch_size'],newW, newR, gradx, pre, bscale)
 
-            #if (PARS['debug']):
-            #    all_grad.append(gradx)
+            if (PARS['debug']):
+                all_grad.append(gradx)
             ts+=1
             vs+=2
         elif ('drop' in name):
@@ -408,8 +408,9 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
                 OPLIST.append(assign_op_fcR)
             gradx=fully_connected_backprop(newW, newR, gradx, bscale)
             if (PARS['debug']):
-                all_grad.append(gradfcW)
-                all_grad.append(gradfcR)
+                all_grad.append(gradx)
+                #all_grad.append(gradfcW)
+                #all_grad.append(gradfcR)
             ts+=1
             vs+=2
         elif ('sparse' in name):
@@ -440,9 +441,9 @@ def back_prop(loss,acc,TS,VS,x,PARS, non_trainable=None):
             grad_hold_var[joint_parent]=grad_hold
 
         # Mess things up - have gradx be a mix of the back-propagated signal and the pre signal.
-        if (ts<lts-1 and ts>0):
-            U = tf.less(tf.random_uniform([PARS['batch_size']] + (pre.shape.as_list())[1:]), .8)
-            gradx=K.tf.where(U, tf.reshape(gradx,pre.shape.as_list()), pre)
+        #if (ts<lts-1 and ts>0):
+        #   U = tf.less(tf.random_uniform([PARS['batch_size']] + (pre.shape.as_list())[1:]), .8)
+        #    gradx=K.tf.where(U, tf.reshape(gradx,pre.shape.as_list()), pre)
     if (PARS['debug']):
         print('all_grad',len(all_grad))
         for cg in all_grad:
