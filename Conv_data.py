@@ -170,6 +170,14 @@ def get_mnist(PARS):
     else:
         nval=10000
     tr, trl, val, vall, test, testl = load_dataset(nval=nval)
+    if ('one_class' in PARS):
+        tr=tr[trl==PARS['one_class']]
+        trl=trl[trl==PARS['one_class']]
+        test = test[testl == PARS['one_class']]
+        testl = testl[testl == PARS['one_class']]
+        if (nval>0):
+            val = val[vall == PARS['one_class']]
+            vall = vall[vall == PARS['one_class']]
     trl=one_hot(trl)
     if (nval>0):
         vall=one_hot(vall)
