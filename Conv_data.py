@@ -208,7 +208,7 @@ def get_cifar(PARS):
     train_labels=one_hot(np.int32(tr_lb[0:45000]),PARS)
     val_data=np.float32(tr[45000:])/255.
     val_labels=one_hot(np.int32(tr_lb[45000:]),PARS)
-    filename = '/Users/amit/Box Sync/URFB/_CIFAR/'+data_set+'_test.hdf5'
+    filename = pre+'/URFB/_CIFAR/'+data_set+'_test.hdf5'
     f = h5py.File(filename, 'r')
     key = list(f.keys())[0]
     # Get the data
