@@ -143,10 +143,14 @@ def load_dataset(pad=0,nval=10000):
         return data
 
     # We can now download and read the training and test set images and labels.
-    X_train = load_mnist_images('../blobs/MNIST/train-images-idx3-ubyte.gz')
-    y_train = load_mnist_labels('../blobs/MNIST/train-labels-idx1-ubyte.gz')
-    X_test = load_mnist_images('../blobs/MNIST/t10k-images-idx3-ubyte.gz')
-    y_test = load_mnist_labels('../blobs/MNIST/t10k-labels-idx1-ubyte.gz')
+    if 'Linux' in os.uname():
+        pre='/home/amit/Python/blobs'
+    else:
+        pre='/Users/amit/Desktop/Dropbox/Python'
+    X_train = load_mnist_images(pre+'/MNIST/train-images-idx3-ubyte.gz')
+    y_train = load_mnist_labels(pre+'/MNIST/train-labels-idx1-ubyte.gz')
+    X_test = load_mnist_images(pre+'/MNIST/t10k-images-idx3-ubyte.gz')
+    y_test = load_mnist_labels(pre+'/MNIST/t10k-labels-idx1-ubyte.gz')
 
     # We reserve the last 10000 training examples for validation.
     if (nval>0):
@@ -187,7 +191,11 @@ def get_mnist(PARS):
 def get_cifar(PARS):
 
     data_set=PARS['data_set']
-    filename = '/Users/amit/Box Sync/URFB/_CIFAR/'+data_set+'_train.hdf5'
+    if 'Linux' in os.uname():
+        pre='/home/amit'
+    else:
+        pre='/Users/amit/Box Sync'
+    filename = pre+'/URFB/_CIFAR/'+data_set+'_train.hdf5'
     print(filename)
     f = h5py.File(filename, 'r')
     key = list(f.keys())[0]
