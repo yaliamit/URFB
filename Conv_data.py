@@ -192,7 +192,7 @@ def get_cifar(PARS):
 
     data_set=PARS['data_set']
     if 'Linux' in os.uname():
-        pre='/home/amit'
+        pre='/home/amit/ga'
     else:
         pre='/Users/amit/Box Sync'
     filename = pre+'/URFB/_CIFAR/'+data_set+'_train.hdf5'
