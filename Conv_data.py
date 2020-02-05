@@ -204,10 +204,14 @@ def get_cifar(PARS):
     print('tr',tr.shape)
     key = list(f.keys())[1]
     tr_lb=f[key]
-    train_data=np.float32(tr[0:45000])/255.
-    train_labels=one_hot(np.int32(tr_lb[0:45000]),PARS)
-    val_data=np.float32(tr[45000:])/255.
-    val_labels=one_hot(np.int32(tr_lb[45000:]),PARS)
+    ntr=len(tr)-PARS['nval']
+    train_data=np.float32(tr[0:ntr])/255.
+    train_labels=one_hot(np.int32(tr_lb[0:ntr]),PARS)
+    val_data=None
+    val_labels=None
+    if PARS['nval']:
+        val_data=np.float32(tr[ntr:])/255.
+        val_labels=one_hot(np.int32(tr_lb[ntr:]),PARS)
     filename = pre+'/URFB/_CIFAR/'+data_set+'_test.hdf5'
     f = h5py.File(filename, 'r')
     key = list(f.keys())[0]
