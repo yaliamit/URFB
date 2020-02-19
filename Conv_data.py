@@ -16,11 +16,11 @@ def rotate_dataset_rand(X,angle=0,scale=0,shift=0,gr=0,flip=False,blur=False,sat
     # shift=NETPARS['trans']['shift']
     s=np.shape(X)
     Xr=np.zeros(s)
-    cent=np.array(s[2:4])/2
-    #angles=np.random.rand(Xr.shape[0])*angle-angle/2.
-    aa=np.int32(np.random.rand(Xr.shape[0])*.25)
-    aa[np.int32(len(aa)/2):]=aa[np.int32(len(aa)/2):]+.75
-    angles=aa*angle-angle/2
+    cent=np.array(s[1:3])/2
+    angles=np.random.rand(Xr.shape[0])*angle-angle/2.
+    #aa=np.int32(np.random.rand(Xr.shape[0])*.25)
+    #aa[np.int32(len(aa)/2):]=aa[np.int32(len(aa)/2):]+.75
+    #angles=aa*angle-angle/2
     SX=np.exp(np.random.rand(Xr.shape[0],2)*scale-scale/2.)
     SH=np.int32(np.round(np.random.rand(Xr.shape[0],2)*shift)-shift/2)
     FL=np.zeros(Xr.shape[0])
@@ -144,7 +144,7 @@ def load_dataset(pad=0,nval=10000):
 
     # We can now download and read the training and test set images and labels.
     if 'Linux' in os.uname():
-        pre='/home/amit/Python/blobs'
+        pre='/home/amit/ga/Python/blobs'
     else:
         pre='/Users/amit/Desktop/Dropbox/Python'
     X_train = load_mnist_images(pre+'/MNIST/train-images-idx3-ubyte.gz')
