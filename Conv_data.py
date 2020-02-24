@@ -98,7 +98,7 @@ def one_hot(values,PARS=None,n_values=10):
 
 
 
-def load_dataset(pad=0,nval=10000):
+def load_dataset(pad=0,nval=10000, F=False):
     # We first define a download function, supporting both Python 2 and 3.
     if sys.version_info[0] == 2:
         from urllib import urlretrieve
@@ -144,13 +144,16 @@ def load_dataset(pad=0,nval=10000):
 
     # We can now download and read the training and test set images and labels.
     if 'Linux' in os.uname():
-        pre='/home/amit/ga/Python/blobs'
+        pre='/home/amit/ga/Python'
     else:
         pre='/Users/amit/Desktop/Dropbox/Python'
-    X_train = load_mnist_images(pre+'/MNIST/train-images-idx3-ubyte.gz')
-    y_train = load_mnist_labels(pre+'/MNIST/train-labels-idx1-ubyte.gz')
-    X_test = load_mnist_images(pre+'/MNIST/t10k-images-idx3-ubyte.gz')
-    y_test = load_mnist_labels(pre+'/MNIST/t10k-labels-idx1-ubyte.gz')
+    fold='/MNIST/'
+    if F:
+        fold='/FMNIST/'
+    X_train = load_mnist_images(pre+fold+'train-images-idx3-ubyte.gz')
+    y_train = load_mnist_labels(pre+fold+'train-labels-idx1-ubyte.gz')
+    X_test = load_mnist_images(pre+fold+'t10k-images-idx3-ubyte.gz')
+    y_test = load_mnist_labels(pre+fold+'t10k-labels-idx1-ubyte.gz')
 
     # We reserve the last 10000 training examples for validation.
     if (nval>0):
@@ -173,7 +176,8 @@ def get_mnist(PARS):
         nval=PARS['nval']
     else:
         nval=10000
-    tr, trl, val, vall, test, testl = load_dataset(nval=nval)
+    F='f' in PARS['data_set']
+    tr, trl, val, vall, test, testl = load_dataset(nval=nval,F=F)
     if ('one_class' in PARS):
         tr=tr[trl==PARS['one_class']]
         trl=trl[trl==PARS['one_class']]
@@ -226,7 +230,7 @@ def get_cifar(PARS):
 def get_data(PARS):
     if ('cifar' in PARS['data_set']):
         train, val, test=get_cifar(PARS)
-    elif (PARS['data_set']=="mnist"):
+    elif ("mnist" in PARS['data_set']):
         train, val, test= get_mnist(PARS)
     num_train = np.minimum(PARS['num_train'], train[0].shape[0])
     train = (train[0][0:num_train], train[1][0:num_train])
