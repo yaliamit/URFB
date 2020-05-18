@@ -225,6 +225,31 @@ def get_cifar(PARS):
     test_labels=one_hot(np.int32(f[key]),PARS)
     return (train_data, train_labels), (val_data, val_labels), (test_data, test_labels)
 
+def get_letters(PARS):
+
+    data_set=PARS['data_set']
+    if 'Linux' in os.uname():
+        pre='/home/amit/ga/Python/MNIST/'
+    else:
+        pre='/Users/amit/LSDA/'
+    filename = '.npy'
+    print(filename)
+    train_data=np.load(pre+data_set+'_data.npy')
+    train_data=np.float32(train_data/255.)
+    train_labels=np.load(pre+data_set+'_labels.npy')
+    test_data=train_data[-10000:]
+    train_data=train_data[:-10000]
+    test_labels=train_labels[-10000:]
+    train_labels=train_labels[:-10000]
+    val_data=None; val_labels=None
+    if PARS['nval']:
+        val_data=train_data[-PARS['nval']:]
+        train_data=train_data[:-PARS['nval']]
+        val_labels=train_labels[-PARS['nval']]
+        train_labels=train_labels[-PARS['nval']]
+
+    return (train_data, train_labels), (val_data, val_labels), (test_data, test_labels)
+
 
 
 def get_data(PARS):
@@ -232,6 +257,8 @@ def get_data(PARS):
         train, val, test=get_cifar(PARS)
     elif ("mnist" in PARS['data_set']):
         train, val, test= get_mnist(PARS)
+    elif("letters" in PARS['data_set']):
+        train, val, test = get_letters(PARS)
     num_train = np.minimum(PARS['num_train'], train[0].shape[0])
     train = (train[0][0:num_train], train[1][0:num_train])
     dim = train[0].shape[1]
