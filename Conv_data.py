@@ -232,7 +232,7 @@ def get_letters(PARS):
         pre='/home/amit/ga/Python/MNIST/'
     else:
         pre='/Users/amit/LSDA/'
-    filename = '.npy'
+    filename = data_set+'.npy'
     print(filename)
     train_data=np.load(pre+data_set+'_data.npy')
     train_data=np.float32(train_data/255.)
