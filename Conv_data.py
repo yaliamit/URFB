@@ -257,7 +257,7 @@ def get_data(PARS):
         train, val, test=get_cifar(PARS)
     elif ("mnist" in PARS['data_set']):
         train, val, test= get_mnist(PARS)
-    elif("letters" in PARS['data_set']):
+    elif("letters" in PARS['data_set'] or "TR" in PARS['data_set']):
         train, val, test = get_letters(PARS)
     num_train = np.minimum(PARS['num_train'], train[0].shape[0])
     train = (train[0][0:num_train], train[1][0:num_train])
