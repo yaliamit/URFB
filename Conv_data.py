@@ -263,7 +263,7 @@ def get_data(PARS):
     train = (train[0][0:num_train], train[1][0:num_train])
     dim = train[0].shape[1]
     PARS['nchannels'] = train[0].shape[3]
-    PARS['n_classes'] = train[1].shape[1]
+    PARS['n_classes'] = np.max(train[1])+1
     print('n_classes', PARS['n_classes'], 'dim', dim, 'nchannels', PARS['nchannels'])
     return train, val, test, dim
 
